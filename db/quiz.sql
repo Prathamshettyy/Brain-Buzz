@@ -115,6 +115,20 @@ DELIMITER ;
 
 -- --------------------------------------------------------
 
+DELIMITER $$
+
+CREATE TRIGGER assert_unique_quizname
+BEFORE INSERT ON quiz
+FOR EACH ROW
+BEGIN
+    IF (SELECT COUNT(*) FROM quiz WHERE quizname = NEW.quizname) > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Assertion failed: Quiz name must be unique.';
+    END IF;
+END$$
+
+DELIMITER ;
+
 --
 -- Table structure for table `score`
 --
@@ -199,6 +213,8 @@ INSERT INTO `student` (`usn`, `name`, `mail`, `phno`, `gender`, `DOB`, `pw`, `de
 
 --
 -- Indexes for dumped tables
+
+
 --
 
 --
