@@ -1,261 +1,147 @@
-<html>
-
-<?php require ("header.php");?>
-
 <?php
-session_start();
+// Start session and check if the user is logged in as a staff member
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['staffid'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include database connection
 require_once 'sql.php';
-                $conn = mysqli_connect($host, $user, $ps, $project);if (!$conn) {
-    echo "<script>alert(\"Database error retry after some time !\")</script>";
-} else {
-    $staffid = $_SESSION["staffid"];
-    $sql = "select * from staff where staffid='{$staffid}'";
-    $res =   mysqli_query($conn, $sql);
-    if ($res == true) {
-        global $dbstaffid, $dbpw;
-        while ($row = mysqli_fetch_array($res)) {
-            $dbstaffid = $row['staffid'];
-            $dbname = $row['name'];
-			$dbmail = $row['mail'];
-            $dbphno = $row['phno'];
-            $dbgender = $row['gender'];
-            $dbdob = $row['DOB'];
-            $dbdept = $row['dept'];
-        }
-    }
-    if (isset($_POST['submit'])) {
-        $qname = strtolower($_POST['quizname']);
-        $_SESSION["qname"]=$qname;
-        $sql1 = "insert into quiz(quizname,staffid) values('$qname','$staffid')";
-        $res1 = mysqli_query($conn, $sql1);
-        if ($res1 == true) {
-            $sql = "select quizid from quiz where quizname='" . $qname . "';";
-            $res = mysqli_query($conn, $sql);
-            if ($res == true) {
-                header("location: addqs.php");
-            } else {
-                echo "<script>alert(\"some error occured\");</script>";
-            }
-        } else {
-            echo "<script>alert(\"Already name exists\");</script>";
-        }
-    }
-    if (isset($_POST['submit1'])) {
-        $qid1 = strtolower($_POST['quizid']);
-        $sql1 = "delete from quiz where quizid='{$qid1}'";
-        $res1 = mysqli_query($conn, $sql1);
-        if ($res1 == true) {
-            echo "<script>alert(\"Quiz successfully deleted\");</script>";
-        } else {
-            echo "<script>alert(\"Unknown error occured during deletion of quiz\");</script>";
+$conn = mysqli_connect($host, $user, $ps, $project);
+if (!$conn) {
+    $db_error = "Could not connect to the database.";
+}
 
-        }
-    }
-    if (isset($_POST['submit2'])) {
-        $qid1 =$_POST['quizid'];
-        $sql1 = "select quizid from quiz where quizid='{$qid1}'";
-        $res1 = mysqli_query($conn, $sql1);
-        if ($res1 == true) {
-            echo "<script>window.location.replace(\"viewq.php?qid=".$qid1."\");</script>";
-        } else {
-            echo "<script>alert(\"Unknown error occured during viweing of quiz\");</script>";
+$staff_id = $_SESSION['staffid'];
+$form_feedback = null;
 
+// --- Handle Add Quiz Request ---
+if (isset($_POST['add_quiz'])) {
+    if (isset($conn)) {
+        $quiz_name = mysqli_real_escape_string($conn, $_POST['quiz_name']);
+        $sql = "INSERT INTO quiz (quizname, staffid) VALUES ('$quiz_name', '$staff_id')";
+        if (mysqli_query($conn, $sql)) {
+            $new_quiz_id = mysqli_insert_id($conn);
+            // Redirect to add questions page
+            header("Location: addqs.php?q=" . $new_quiz_id);
+            exit();
+        } else {
+            $form_feedback = ['message' => 'Error: A quiz with this name may already exist.', 'type' => 'error'];
         }
     }
 }
+
+// --- Handle Delete Quiz Request ---
+if (isset($_POST['delete_quiz'])) {
+    if (isset($conn)) {
+        $quizid_to_delete = mysqli_real_escape_string($conn, $_POST['quizid_to_delete']);
+        $sql = "DELETE FROM quiz WHERE quizid = '{$quizid_to_delete}'";
+        if (mysqli_query($conn, $sql)) {
+            $form_feedback = ['message' => 'Quiz deleted successfully!', 'type' => 'success'];
+        } else {
+            $form_feedback = ['message' => 'Error deleting quiz. It may have associated questions or scores.', 'type' => 'error'];
+        }
+    }
+}
+
+// Include the header AFTER all PHP logic
+include_once 'header.php';
 ?>
 
- <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
+<div class="container">
+    <h2 style="margin-bottom: 1.5rem;">Staff Dashboard</h2>
 
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
+    <div class="card">
+        <nav class="tab-nav">
+            <a class="tab-link active" onclick="showTab('add_quiz_tab')"><i class="fa fa-plus-circle"></i> Add Quiz</a>
+            <a class="tab-link" onclick="showTab('manage_quiz_tab')"><i class="fa fa-list-alt"></i> Manage Quizzes</a>
+        </nav>
+        
+        <?php if (!empty($form_feedback)): ?>
+            <div class="message <?php echo $form_feedback['type']; ?>">
+                <?php echo $form_feedback['message']; ?>
             </div>
-          </div>
+        <?php endif; ?>
 
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-				
-				 <li class="nav-item">
-              <a href="homestaff.php" class="nav-link">
-                <span class="text-success nav-link-inner--text font-weight-bold"
-                  ><i class="text-success fad fa-home"></i> DashBoard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="quizlist.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-poll"></i> QuizList</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="staffleaderboard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-award"></i> LeaderBoard</span
-                >
-              </a>
-            </li>
-			
-			
-			 <li class="nav-item">
-              <a href="staffprofile.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fas fa-user-circle"></i> <?php echo $dbname ?></span
-                >
-              </a>
-            </li>
-		  
-		   <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-danger fas fa-power-off"></i> Logout</span
-                >
-              </a>
-            </li>
-		  
-
-          
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
-
-	
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-
-
-<div class="container"> 
-      
-<div class="row">
-<div class="col-sm-12 mb-3">  
-			  
-  <div class="nav nav-tabs nav-fill bg-gradient-default" id="nav-tab" role="tablist">
-    <a class="nav-item nav-link active font-weight-bold text-success" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Add Quiz</a>
-  
-  </div>
-                  
-                		  
-      <div class="tab-content py-3 px-3 px-sm-0 bg-gradient-inf" id="nav-tabContent">
- 
-         <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-           <div class="card card-body bg-gradient-success">
-			<h1 class="text-white">Add Quiz</h1>
-					
-                <form  method="post">     
-                        
-					<div class="form-group row">
-                    <label for="name" class="col-md-3 col-form-label"
-                      ><h6 class="text-white font-weight-bold">Quiz Name</h6>
-                    </label>
-                    <div class="col-md-9">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="name"
-                        name="quizname"
-                        placeholder="Enter Quiz Name"
-						required"
-                      />
-                    </div>
-                  </div>
-				  
-					 <div class="form-group row">
-                    <div class="offset-md-3 col-md-2">
-                      <button
-                        type="submit"
-                        class="btn btn-info text-dark"
-						name="submit" id="submit" value="submit"
-                      >
-                        Submit
-                      </button>
-                    </div>
-					</div>
-             </form>
-				
-           </div>
-       </div> 
-	   
-
-
-	</div>
-	
-                  </div>
+        <div id="add_quiz_tab" class="tab-content active" style="padding: 1.5rem;">
+            <form method="POST" action="homestaff.php" autocomplete="off">
+                <div class="form-group">
+                    <label for="quiz_name">New Quiz Name</label>
+                    <input type="text" id="quiz_name" name="quiz_name" placeholder="e.g., 'Advanced PHP Concepts'" required>
                 </div>
-              </div>  
-  
-</section>
+                <button type="submit" name="add_quiz" class="btn btn-solid" style="width:100%;">Create & Add Questions</button>
+            </form>
+        </div>
 
-    <?php require("footer.php");?>
+        <div id="manage_quiz_tab" class="tab-content" style="padding: 1.5rem;">
+            <p style="color:var(--text-secondary); margin-top:-1rem; margin-bottom:1.5rem;">View, manage questions for, or delete existing quizzes.</p>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Quiz Title</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        if (isset($conn)) {
+                            $sql = "SELECT * FROM quiz ORDER BY quizid DESC";
+                            $res = mysqli_query($conn, $sql);
+                            if (mysqli_num_rows($res) > 0) {
+                                while ($row = mysqli_fetch_assoc($res)) {
+                                    $quiz_id = htmlspecialchars($row['quizid']);
+                                    $quiz_name = htmlspecialchars($row['quizname']);
+                                    echo "<tr>
+                                            <td>{$quiz_name}</td>
+                                            <td style='text-align: right;'>
+                                                <a href='addqs.php?q={$quiz_id}' class='btn' style='margin-right: 0.5rem;'>Add/View Q's</a>
+                                                <form method='POST' action='homestaff.php' style='display:inline;' onsubmit='return confirm(\"Are you sure you want to delete this quiz?\");'>
+                                                    <input type='hidden' name='quizid_to_delete' value='{$quiz_id}'>
+                                                    <button type='submit' name='delete_quiz' class='btn' style='background-color:#991b1b; border-color:#991b1b; color:#fee2e2;'>Delete</button>
+                                                </form>
+                                            </td>
+                                          </tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='2' style='text-align:center;'>No quizzes created yet.</td></tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='2' style='text-align:center;'>{$db_error}</td></tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
-</body>
+<style>
+    .tab-nav { display: flex; border-bottom: 1px solid var(--border-color); }
+    .tab-link { padding: 1rem 1.5rem; cursor: pointer; font-weight: 500; color: var(--text-secondary); border-bottom: 3px solid transparent; }
+    .tab-link.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+    .tab-link i { margin-right: 0.5rem; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .message { padding: 1rem; margin: 0 1.5rem 1.5rem 1.5rem; border-radius: 6px; text-align: center; font-weight: 500; }
+    .message.success { background-color: #166534; color: #dcfce7; }
+    .message.error { background-color: #991b1b; color: #fee2e2; }
+</style>
 
-</html>
+<script>
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+</script>
+
+<?php
+if (isset($conn)) { mysqli_close($conn); }
+include_once 'footer.php';
+?>

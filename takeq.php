@@ -1,226 +1,133 @@
-<html>
-
-
-<?php require ("header.php");?>
-
 <?php
-session_start();
+// Start session and check if the user is logged in
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Redirect to login if not logged in as a student
+if (!isset($_SESSION['usn'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include database connection and establish a connection
 require_once 'sql.php';
-                $conn = mysqli_connect($host, $user, $ps, $project);if (!$conn) {
-    echo "<script>alert(\"Database error retry after some time !\")</script>";
-} else {
-    $usn = $_SESSION["usn"];
-    $sql = "select * from student where usn='{$usn}'";
-    $res =   mysqli_query($conn, $sql);
-    if ($res == true) {
-        global $dbusn, $dbpw;
-        while ($row = mysqli_fetch_array($res)) {
-            $dbusn = $row['usn'];
-            $dbname = $row['name'];
-			$dbmail = $row['mail'];
-            $dbphno = $row['phno'];
-            $dbgender = $row['gender'];
-            $dbdob = $row['DOB'];
-            $dbdept = $row['dept'];
+$conn = mysqli_connect($host, $user, $ps, $project);
+if (!$conn) {
+    $db_error = "Could not connect to the database. Please try again later.";
+}
+
+// --- Logic to Handle Quiz Submission ---
+if (isset($_POST['submit_quiz']) && isset($_POST['quizid'])) {
+    if (isset($conn)) {
+        $quizid = mysqli_real_escape_string($conn, $_POST['quizid']);
+        $usn = $_SESSION['usn']; 
+        $submitted_answers = $_POST['answers']; // This will be a numerically indexed array
+        
+        $score = 0;
+        
+        // Fetch the correct answers from the database IN ORDER
+        $sql_answers = "SELECT answer FROM questions WHERE quizid = '{$quizid}'";
+        $res_answers = mysqli_query($conn, $sql_answers);
+        
+        $correct_answers = [];
+        while($row = mysqli_fetch_assoc($res_answers)) {
+            $correct_answers[] = $row['answer'];
+        }
+
+        // Compare submitted answers with correct answers by index
+        foreach ($submitted_answers as $index => $user_answer) {
+            if (isset($correct_answers[$index]) && $user_answer === $correct_answers[$index]) {
+                $score++;
+            }
+        }
+        
+        $total_questions = count($correct_answers);
+        $remark = ($score / $total_questions) >= 0.5 ? 'Pass' : 'Fail';
+
+        $insert_sql = "INSERT INTO score (score, usn, quizid, totalscore, remark) VALUES ('$score', '$usn', '$quizid', '$total_questions', '$remark')";
+        
+        if(mysqli_query($conn, $insert_sql)) {
+            header("Location: studscorecard.php");
+            exit();
+        } else {
+             $db_error = "Error saving your score. You may have already completed this quiz.";
         }
     }
 }
+
+// Include the header AFTER all the submission logic
+include_once 'header.php';
 ?>
 
-  <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
+<style>
+    .question-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .question-text { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; color: var(--text-primary); }
+    .options-group label { display: block; background-color: var(--bg-color); padding: 1rem; margin-bottom: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); cursor: pointer; transition: border-color 0.3s ease, background-color 0.3s ease; }
+    .options-group label:hover { border-color: var(--primary-color); }
+    .options-group input[type="radio"] { margin-right: 10px; }
+</style>
 
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
+<div class="container">
+    <?php
+    // --- Logic to Display The Quiz ---
+    if (isset($_GET['q']) && isset($conn)) {
+        $quizid = mysqli_real_escape_string($conn, $_GET['q']);
 
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-				
-				 <li class="nav-item">
-              <a href="homestud.php" class="nav-link">
-                <span class="text-success nav-link-inner--text font-weight-bold"
-                  ><i class="text-success fad fa-home"></i> DashBoard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="studscorecard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-poll"></i> ScoreCard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="studleaderboard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-award"></i> LeaderBoard</span
-                >
-              </a>
-            </li>
-			
-			
-			 <li class="nav-item">
-              <a href="studprofile.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fas fa-user-circle"></i> <?php echo $dbname ?></span
-                >
-              </a>
-            </li>
-		  
-		   <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-danger fas fa-power-off"></i> Logout</span
-                >
-              </a>
-            </li>
-		  
+        $sql_quiz_title = "SELECT quizname FROM quiz WHERE quizid = '{$quizid}'";
+        $res_quiz_title = mysqli_query($conn, $sql_quiz_title);
+        $quiz_row = mysqli_fetch_assoc($res_quiz_title);
+        $quiz_name = $quiz_row ? htmlspecialchars($quiz_row['quizname']) : "Quiz";
 
-          
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
-		
-	
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+        $sql_questions = "SELECT * FROM questions WHERE quizid = '{$quizid}'";
+        $res_questions = mysqli_query($conn, $sql_questions);
+        
+        echo "<h2 style='margin-bottom:1rem;'>Taking Quiz: {$quiz_name}</h2>";
 
-		
-<div class="container-fluid"> 
-      
-<div class="row">
-            <div class="col-sm-12 mb-3">  
-              <div class="card card-body bg-gradient-default text-white mt-3">
+        if (mysqli_num_rows($res_questions) > 0) {
+            echo "<form method='POST' action='takeq.php'>";
+            echo "<input type='hidden' name='quizid' value='{$quizid}'>";
+            
+            $q_index = 0; // Use a simple numeric index
+            while ($row = mysqli_fetch_assoc($res_questions)) {
+                $question = htmlspecialchars($row['qs']);
+                $options = [
+                    htmlspecialchars($row['op1']),
+                    htmlspecialchars($row['op2']),
+                    htmlspecialchars($row['op3']),
+                    htmlspecialchars($row['answer'])
+                ];
+                shuffle($options);
 
-<?php 
-        if(isset($_GET["qid"])){
-        $qid=$_GET["qid"];
-            $sql ="select * from questions where quizid='{$qid}'";
-            $res=mysqli_query($conn,$sql);
-            if($res)
-            {
-                $count=mysqli_num_rows($res);
-                if(mysqli_num_rows($res)==0)
-                {
-                    echo "No questions found under this quiz please come later";
-                }else{
-                $i=1;
-                $j=0;
-                echo "<form method=\"POST\" class=\" form-group\">";
-                while ($row = mysqli_fetch_assoc($res)) { 
-                    echo $i.". ".$row["qs"]."<br>";
-                    echo "<input class=\" \" type=\"radio\" value=\"".$j."\" name=\"ans".$i.$j."\">".$row["op1"]."<br>";
-                    echo "<input type=\"radio\" value=\"".($j+1)."\" name=\"ans".$i.$j."\">".$row["op2"]."<br>";               
-                    echo "<input type=\"radio\" value=\"".($j+2)."\"name=\"ans".$i.$j."\">".$row["op3"]."<br>";               
-                    echo "<input type=\"radio\"value=\"".($j+3)."\" name=\"ans".$i.$j."\">".$row["answer"]."<br><br>";  
-                    $i++;                            
+                echo "<div class='question-card'>";
+                echo "<p class='question-text'>".($q_index + 1).". {$question}</p>";
+                echo "<div class='options-group'>";
+                
+                foreach ($options as $option) {
+                    // **FIX:** The name of the radio button now uses a simple numeric index.
+                    echo "<label><input type='radio' name='answers[{$q_index}]' value='{$option}' required> {$option}</label>";
                 }
-                echo "<input id=\"btn\" type=\"submit\" name=\"submit\" value=\"submit\"  class=\" btn btn-success \">";
-                echo "</form>";
+
+                echo "</div></div>";
+                $q_index++;
             }
-            }
-            else
-            {
-                echo "error".mysqli_error($conn).".";
-            }
-            if(isset($_POST["submit"])){
-                global $score;
-                for($i=1;$i<=$count;$i++)
-                {
-                    if(isset($_POST["ans".$i.$j]) && $_POST["ans".$i.$j]==3){
-                        $score++;
-                    }
-                }
-                echo "<script>alert(\"You scored ".$score." out of ".$count."\");</script>";
-                $sql ="insert into score(score,usn,quizid,totalscore) values('$score','$dbusn','$qid','$count');";
-                $res=mysqli_query($conn,$sql);
-                if($res)
-                {
-                    echo '<script>history.pushState({}, "", "");</script>';
-                    echo "<script>window.location.replace(\"homestud.php\");</script>";
-                }else{
-                    echo "<script>alert(\"error occured updating score in database".mysqli_error($conn)."\");</script>";
-                }
+
+            echo "<button type='submit' name='submit_quiz' class='btn btn-solid' style='width:100%; padding: 1rem;'>Submit My Answers</button>";
+            echo "</form>";
+
+        } else {
+            echo "<div class='card' style='text-align:center;'><p>This quiz has no questions yet. Please check back later.</p></div>";
         }
-     } ?>
-                  </div>
-                </div>
-              </div>		
-		
+    } elseif (isset($db_error)) {
+        echo "<div class='card' style='text-align:center;'><p style='color:#f87171;'>{$db_error}</p></div>";
+    } else {
+         echo "<div class='card' style='text-align:center;'><p>No quiz selected. Please go back to the dashboard and choose a quiz.</p></div>";
+    }
 
- </div>
- </section>
- 
-    <?php require("footer.php");?>
+    if (isset($conn)) { mysqli_close($conn); }
+    ?>
+</div>
 
-</body>
-
-</html>
+<?php
+include_once 'footer.php';
+?>

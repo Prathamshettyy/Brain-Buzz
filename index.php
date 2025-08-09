@@ -1,257 +1,109 @@
-<?php session_start(); ?>
-<html>
+<?php
+include_once 'header.php';
+?>
 
-<?php require ("header.php");?>
+<style>
+    /* --- Styles specific to the Index Page --- */
+    .hero-section {
+        text-align: center;
+        padding: 6rem 1rem;
+        background: linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.9)), url('assets/img/hero-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        border-radius: 8px;
+        margin-bottom: 4rem;
+    }
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #fff;
+    }
+    .hero-section h1 .highlight {
+        color: var(--primary-color);
+    }
+    .hero-section p {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto 2rem auto;
+    }
+    .hero-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    .features-section {
+        padding: 2rem 0;
+        text-align: center;
+    }
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+    .feature-card {
+        background-color: var(--surface-color);
+        padding: 2.5rem 2rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .feature-card .icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+    }
+    .feature-card h3 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+        color: var(--text-secondary);
+    }
+</style>
 
-  <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
+<div class="container">
 
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-		   <li class="nav-item">
-              <a href="contact.php" class="nav-link">
-                <span class="text-white nav-link-inner--text"
-                  ><i class="text-white fas fa-address-card"></i> Contact</span
-                >
-              </a>
-            </li>
-			
-							  <li class="nav-item">
-			   <div class="dropdown show ">
-		  <a class="nav-link dropdown-toggle text-white " href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-		                  <span class="text-white nav-link-inner--text"
-                  ><i class="text-white fas fa-sign-in-alt"></i> Login</span
-                >
-		  </a>
-
-		  <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-			<a class="dropdown-item" href="loginstud.php">Student</a>
-			<a class="dropdown-item" href="login.php">Staff</a>
-		  </div>
-		</div>
-			</li>
-			
-		  
-
-
-            <li class="nav-item">
-              <a href="signup.php" class="nav-link">
-                <span class="text-white nav-link-inner--text"
-                  ><i class="text-white fas fa-user-plus"></i> Sign Up</span
-                >
-              </a>
-            </li>
-
-          
-          </ul>
+    <section class="hero-section">
+        <h1>Welcome to <span class="highlight">Brain-Buzz</span></h1>
+        <p>The modern, engaging platform for online quizzes. Sharpen your knowledge, challenge your peers, and track your success.</p>
+        <div class="hero-actions">
+            <a href="signup.php" class="btn btn-solid">Get Started Now</a>
+            <a href="login.php" class="btn">I Already Have an Account</a>
         </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
-  
-  
+    </section>
 
-<div class="wrapper" >
-
-
-      <div class="page-header">
-          <div class="page-header-image" style="background-image: url('assets/img/home.png')"></div>
-        <div class="container shape-container d-flex align-items-center py-lg">
-          <div class="col px-0">
-            <div class="row align-items-center justify-content-center">
-              <div class="col-lg-6 text-center">
-                <h1 class="text-white display-1">Welcome </h1>
-                <h2 class="display-4 font-weight-normal text-white">Sign Up Below 👇</h2>
-                <div class="btn-wrapper mt-4">
-                  <a href="signup.php"   class="btn btn-warning btn-icon mt-3 mb-sm-0">
-                    <span class="btn-inner--icon"><i class="ni ni-button-play"></i></span>
-                    <span class="btn-inner--text">Sign Up</span>
-                  </a>
-                </div>
-              </div>
+    <section class="features-section">
+        <h2>Why Choose Brain-Buzz?</h2>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Everything you need for a seamless quiz experience.</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="icon"><i class="fa fa-user-graduate"></i></div>
+                <h3>For Students</h3>
+                <p>Take a wide variety of quizzes, get instant results, and track your scores over time to see your progress.</p>
             </div>
-          </div>
+            <div class="feature-card">
+                <div class="icon"><i class="fa fa-user-tie"></i></div>
+                <h3>For Staff</h3>
+                <p>Easily create, manage, and deploy quizzes. Monitor student performance with detailed analytics and leaderboards.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon"><i class="fa fa-desktop"></i></div>
+                <h3>Modern Interface</h3>
+                <p>Enjoy our clean, responsive, and dark-themed UI that works beautifully on any device, from desktop to mobile.</p>
+            </div>
         </div>
-      </div>
-	
-	
-	
-	
-	
-	
-<!-- ======================================================================================================================================== -->
- 
-<!-- ======================================================================================================================================== -->
+    </section>
 
-    <div class="section features-6 text-dark bg-white" id="services">
-      <div class="container ">
+</div>
 
-        <div class="row">
-                <div class="col-md-8 mx-auto text-center">
-                    <span class="badge badge-primary badge-pill mb-3">Insight</span>
-                    <h3 class="display-3 ">Features</h3>
-                  
-                </div>
-            </div>
-        <div class="row align-items-center">
-          <div class="col-lg-6">
-            <div class="info info-horizontal info-hover-warning">
-              <div class="description pl-4">
-                <h3 class="title" >For Students</h3>
-                            <p class=" ">Taking Quiz is now made easier. Register and start taking quiz at your own convienence.</p>
-                        
-              </div>
-            </div>
-            <div class="info info-horizontal info-hover-primary mt-5">
-              <div class="description pl-4">
-                <h3 class="">For Teachers</h3>
-                            <p class=" ">Now you can create quiz online and make the sudents take the online without any hassle.</p>
-              </div>
-            </div>
-      
-          </div>
-          <div class="col-lg-6 col-10 mx-md-auto d-none d-md-block">
-            <img class="ml-lg-5 img-fluid" src="assets/img/pic1.png">
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="section features-6 text-dark bg-white" id="tech">
-        <div class="container-fluid shado">
-
-            <div class="row">
-                <div class="col-md-8 mx-auto text-center">
-                    <span class="badge badge-primary badge-pill mb-3">stack</span>
-                    <h3 class="display-3 ">Technologies Used</h3>
-                    <p class="" >Our Development Stack</p>
-                </div>
-            </div>
-
-            <div class="row text-lg-center align-self-center">
-
-                  <div class="col-md-4">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/html.png" alt="HTML5">                       
-                        <h6 class="info-title text-uppercase text-primary">HTML5</h6>
-                    </div>
-                </div>
-
-               <div class="col-md-4">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/css3.png" alt="CSS3">                       
-                        <h6 class="info-title text-uppercase text-primary">CSS3</h6>
-                    </div>
-                </div>
-
-               <div class="col-md-4">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/js.png" alt="JavaScript">                       
-                        <h6 class="info-title text-uppercase text-primary">JavaScript</h6>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="row text-center ">            
-
-                 <div class="col-md-4 d-none d-md-block">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/bootstrap.png" alt="BootStrap4">                       
-                        <h6 class="info-title text-uppercase text-primary">BootStrap4</h6>
-                    </div>
-                </div>
-
-                 <div class="col-md-4 d-none d-md-block">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/apache.png" alt="Apache">                       
-                        <h6 class="info-title text-uppercase text-primary">Apache</h6>
-                    </div>
-                </div>
-                
-                 <div class="col-md-4 d-none d-md-block">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/mysql.png" alt="MySQL">                       
-                        <h6 class="info-title text-uppercase text-primary">MySQL</h6>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row text-center">            
-                <div class="col-md-4 offset-md-4 d-none d-md-block">
-                    <div class="info">
-                    <img class=" img-fluid" src="assets/img/php.png" alt="PHP">                       
-                        <h6 class="info-title text-uppercase text-primary">PHP</h6>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3616.148726942877!2d74.92318891461082!3d12.866579590924816!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba358ff28ef6cf3%3A0xe93953598f53c53c!2sSahyadri%20College%20of%20Engineering%20%26%20Management%20(Autonomous)!5e1!3m2!1sen!2sin!4v1639473731159!5m2!1sen!2sin" width="100%" height="470" frameborder="0" style="border:2px solid black;" allowfullscreen="" aria-hidden="false" tabindex="0"></iframe>
-
-<?php require("footer.php");?>
-
-</div>	
-	
-</body>
-
-</html>
+<?php
+include_once 'footer.php';
+?>

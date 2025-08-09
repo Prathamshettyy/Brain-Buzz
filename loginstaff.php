@@ -1,30 +1,30 @@
 <?php
 session_start();
 
-if (isset($_POST['login_student'])) {
+if (isset($_POST['login_staff'])) {
     require_once 'sql.php';
     $conn = mysqli_connect($host, $user, $ps, $project);
     if (!$conn) {
         $error_message = "Database error. Please try again later.";
     } else {
-        $usn = mysqli_real_escape_string($conn, $_POST['usn']);
-        $password = mysqli_real_escape_string($conn, $_POST['pw']);
-        $sql = "SELECT * FROM student WHERE usn='{$usn}'";
+        $staffid = mysqli_real_escape_string($conn, $_POST['staffid']);
+        $password = mysqli_real_escape_string($conn, $_POST['pass']);
+        $sql = "SELECT * FROM staff WHERE staffid='{$staffid}'";
         $res = mysqli_query($conn, $sql);
 
         if ($row = mysqli_fetch_assoc($res)) {
             if ($password === $row['pw']) {
                 $_SESSION["name"] = $row['name'];
-                $_SESSION["usn"] = $row['usn'];
+                $_SESSION["staffid"] = $row['staffid'];
                 $_SESSION["email"] = $row['mail'];
-                $_SESSION["acc_type"] = 'student';
-                header("Location: homestud.php");
+                $_SESSION["acc_type"] = 'staff';
+                header("Location: homestaff.php");
                 exit();
             } else {
-                $error_message = "Invalid USN or Password.";
+                $error_message = "Invalid Staff ID or Password.";
             }
         } else {
-            $error_message = "Invalid USN or Password.";
+            $error_message = "Invalid Staff ID or Password.";
         }
         mysqli_close($conn);
     }
@@ -36,8 +36,8 @@ include_once 'header.php';
 <div class="container form-container">
     <div class="card">
         <div class="card-header">
-            <h2>Student Login</h2>
-            <p>Welcome back! Enter your USN to begin.</p>
+            <h2>Staff Login</h2>
+            <p>Please enter your credentials to access the dashboard.</p>
         </div>
 
         <?php
@@ -46,16 +46,16 @@ include_once 'header.php';
         }
         ?>
 
-        <form action="loginstud.php" method="post" autocomplete="off">
+        <form action="loginstaff.php" method="post" autocomplete="off">
             <div class="form-group">
-                <label for="usn">USN (University Seat Number)</label>
-                <input type="text" id="usn" name="usn" required>
+                <label for="staffid">Staff ID</label>
+                <input type="text" id="staffid" name="staffid" required>
             </div>
             <div class="form-group">
-                <label for="pw">Password</label>
-                <input type="password" id="pw" name="pw" required>
+                <label for="pass">Password</label>
+                <input type="password" id="pass" name="pass" required>
             </div>
-            <button type="submit" name="login_student" class="btn btn-solid" style="width:100%;">Login</button>
+            <button type="submit" name="login_staff" class="btn btn-solid" style="width:100%;">Login</button>
             <div class="form-footer-link">
     <a href="forgot-password.php">Forgot Password?</a>
 </div>
