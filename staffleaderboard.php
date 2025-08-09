@@ -3,21 +3,32 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Redirect to login if not logged in or not staff
 if (!isset($_SESSION['staffid'])) {
     header("Location: login.php");
     exit();
 }
 
-// Include database connection and header
-require_once 'sql.php';
+// Include the modern PDO database connection
+require_once 'sql.php'; // This creates the $pdo object
 include_once 'header.php';
 
-// Establish database connection
-$conn = mysqli_connect($host, $user, $ps, $project);
-if (!$conn) {
-    $db_error = "Could not connect to the database. Please try again later.";
+$leaderboard_data = [];
+$db_error = null;
+
+try {
+    // This query correctly gets the total score for students who have taken a quiz
+    $sql = "SELECT s.name, s.usn, SUM(sc.score) AS totalscore 
+            FROM student s 
+            INNER JOIN score sc ON s.usn = sc.usn 
+            GROUP BY s.usn, s.name
+            ORDER BY totalscore DESC";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $leaderboard_data = $stmt->fetchAll();
+
+} catch (PDOException $e) {
+    $db_error = "A database error occurred. Please try again later.";
 }
 ?>
 
@@ -39,39 +50,29 @@ if (!$conn) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    if (isset($conn)) {
-                        // This query correctly gets the total score for students who have taken a quiz
-                        $sql = "SELECT s.name, s.usn, SUM(sc.score) AS totalscore 
-                                FROM student s 
-                                INNER JOIN score sc ON s.usn = sc.usn 
-                                GROUP BY s.usn, s.name
-                                ORDER BY totalscore DESC";
-                        $res = mysqli_query($conn, $sql);
-
-                        if (mysqli_num_rows($res) > 0) {
-                            $rank = 1; 
-                            while ($row = mysqli_fetch_assoc($res)) {
-                                $student_name = htmlspecialchars($row['name']);
-                                $student_usn = htmlspecialchars($row['usn']);
-                                $total_score = htmlspecialchars($row['totalscore']);
-                                
-                                echo "<tr>
-                                        <td><strong>#{$rank}</strong></td>
-                                        <td>{$student_name}</td>
-                                        <td>{$student_usn}</td>
-                                        <td style='text-align: right;'><strong>{$total_score}</strong></td>
-                                      </tr>";
-                                $rank++;
-                            }
-                        } else {
-                            echo "<tr><td colspan='4' style='text-align:center; color:var(--text-secondary);'>No students have completed a quiz yet.</td></tr>";
-                        }
-                        mysqli_close($conn);
-                    } else {
-                        echo "<tr><td colspan='4' style='text-align:center; color:#f87171;'>{$db_error}</td></tr>";
-                    }
-                    ?>
+                    <?php if ($db_error): ?>
+                        <tr><td colspan="4" style="text-align: center; color:#f87171;"><?php echo $db_error; ?></td></tr>
+                    <?php elseif (count($leaderboard_data) > 0): ?>
+                        <?php 
+                        $rank = 1;
+                        foreach ($leaderboard_data as $row): 
+                            $student_name = htmlspecialchars($row['name']);
+                            $student_usn = htmlspecialchars($row['usn']);
+                            $total_score = htmlspecialchars($row['totalscore']);
+                        ?>
+                            <tr>
+                                <td><strong>#<?php echo $rank; ?></strong></td>
+                                <td><?php echo $student_name; ?></td>
+                                <td><?php echo $student_usn; ?></td>
+                                <td style='text-align: right;'><strong><?php echo $total_score; ?></strong></td>
+                            </tr>
+                        <?php 
+                            $rank++;
+                        endforeach; 
+                        ?>
+                    <?php else: ?>
+                        <tr><td colspan="4" style='text-align:center; color:var(--text-secondary);'>No students have completed a quiz yet.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

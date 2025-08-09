@@ -3,21 +3,32 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Redirect to login if not logged in
 if (!isset($_SESSION['usn'])) {
     header("Location: login.php");
     exit();
 }
 
-// Include the database connection and header
-require_once 'sql.php';
+// Include the modern PDO database connection
+require_once 'sql.php'; // This creates the $pdo object
 include_once 'header.php';
 
-// Establish database connection
-$conn = mysqli_connect($host, $user, $ps, $project);
-if (!$conn) {
-    $db_error = "Could not connect to the database. Please try again later.";
+$scores = [];
+$db_error = null;
+
+try {
+    $usn = $_SESSION['usn'];
+    // This query gets the data we need using a prepared statement
+    $sql = "SELECT q.quizname, sc.score, sc.totalscore 
+            FROM score sc 
+            JOIN quiz q ON sc.quizid = q.quizid 
+            WHERE sc.usn = ?";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$usn]);
+    $scores = $stmt->fetchAll();
+
+} catch (PDOException $e) {
+    $db_error = "A database error occurred. Please try again later.";
 }
 ?>
 
@@ -39,25 +50,16 @@ if (!$conn) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    if (isset($conn)) {
-                        $usn = $_SESSION['usn'];
-                        // This query gets the data we need
-                        $sql = "SELECT q.quizname, sc.score, sc.totalscore 
-                                FROM score sc 
-                                JOIN quiz q ON sc.quizid = q.quizid 
-                                WHERE sc.usn = '{$usn}'";
-                        
-                        $res = mysqli_query($conn, $sql);
-
-                        if (mysqli_num_rows($res) > 0) {
-                            while ($row = mysqli_fetch_assoc($res)) {
+                    <?php if ($db_error): ?>
+                        <tr><td colspan="4" style="text-align: center; color:#f87171;"><?php echo $db_error; ?></td></tr>
+                    <?php elseif (count($scores) > 0): ?>
+                        <?php foreach ($scores as $row): ?>
+                            <?php
                                 $quizname = htmlspecialchars($row["quizname"]);
-                                $score = (int) $row["score"]; // Cast to integer
-                                $totalscore = (int) $row["totalscore"]; // Cast to integer
+                                $score = (int) $row["score"];
+                                $totalscore = (int) $row["totalscore"];
 
-                                // **FIX:** Calculate the remark here to ensure it's always correct.
-                                // A score of 50% or higher is a "Pass".
+                                // Calculate the remark here to ensure it's always correct.
                                 if ($totalscore > 0) {
                                     $remark = (($score / $totalscore) >= 0.5) ? 'Pass' : 'Fail';
                                 } else {
@@ -65,22 +67,17 @@ if (!$conn) {
                                 }
                                 
                                 $remark_class = ($remark === 'Pass') ? 'remark-pass' : 'remark-fail';
-
-                                echo "<tr>
-                                        <td>{$quizname}</td>
-                                        <td style='text-align: center;'>{$score}</td>
-                                        <td style='text-align: center;'>{$totalscore}</td>
-                                        <td style='text-align: center;'><span class='remark {$remark_class}'>{$remark}</span></td>
-                                      </tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='4' style='text-align: center; color: var(--text-secondary);'>You haven't taken any quizzes yet. <a href='homestud.php'>Click here</a> to get started!</td></tr>";
-                        }
-                        mysqli_close($conn);
-                    } else {
-                        echo "<tr><td colspan='4' style='text-align: center; color:#f87171;'>{$db_error}</td></tr>";
-                    }
-                    ?>
+                            ?>
+                            <tr>
+                                <td><?php echo $quizname; ?></td>
+                                <td style='text-align: center;'><?php echo $score; ?></td>
+                                <td style='text-align: center;'><?php echo $totalscore; ?></td>
+                                <td style='text-align: center;'><span class='remark <?php echo $remark_class; ?>'><?php echo $remark; ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan='4' style='text-align: center; color: var(--text-secondary);'>You haven't taken any quizzes yet. <a href='homestud.php'>Click here</a> to get started!</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

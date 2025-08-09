@@ -8,46 +8,41 @@ if (!isset($_SESSION['staffid'])) {
     exit();
 }
 
-// Include database connection
-require_once 'sql.php';
-$conn = mysqli_connect($host, $user, $ps, $project);
-if (!$conn) {
-    $db_error = "Could not connect to the database.";
-}
+// Include the modern PDO database connection
+require_once 'sql.php'; // This creates the $pdo object
 
 $staff_id = $_SESSION['staffid'];
-$form_feedback = null;
+$feedback = null;
 
-// --- Handle Add Quiz Request ---
+// --- Handle Add Quiz Request using PDO ---
 if (isset($_POST['add_quiz'])) {
-    if (isset($conn)) {
-        $quiz_name = mysqli_real_escape_string($conn, $_POST['quiz_name']);
-        $sql = "INSERT INTO quiz (quizname, staffid) VALUES ('$quiz_name', '$staff_id')";
-        if (mysqli_query($conn, $sql)) {
-            $new_quiz_id = mysqli_insert_id($conn);
-            // Redirect to add questions page
-            header("Location: addqs.php?q=" . $new_quiz_id);
-            exit();
-        } else {
-            $form_feedback = ['message' => 'Error: A quiz with this name may already exist.', 'type' => 'error'];
-        }
+    try {
+        $quiz_name = $_POST['quiz_name'];
+        $sql = "INSERT INTO quiz (quizname, staffid) VALUES (?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$quiz_name, $staff_id]);
+        
+        $new_quiz_id = $pdo->lastInsertId();
+        header("Location: addqs.php?q=" . $new_quiz_id);
+        exit();
+    } catch (PDOException $e) {
+        $feedback = ['message' => 'Error: A quiz with this name may already exist.', 'type' => 'error'];
     }
 }
 
-// --- Handle Delete Quiz Request ---
+// --- Handle Delete Quiz Request using PDO ---
 if (isset($_POST['delete_quiz'])) {
-    if (isset($conn)) {
-        $quizid_to_delete = mysqli_real_escape_string($conn, $_POST['quizid_to_delete']);
-        $sql = "DELETE FROM quiz WHERE quizid = '{$quizid_to_delete}'";
-        if (mysqli_query($conn, $sql)) {
-            $form_feedback = ['message' => 'Quiz deleted successfully!', 'type' => 'success'];
-        } else {
-            $form_feedback = ['message' => 'Error deleting quiz. It may have associated questions or scores.', 'type' => 'error'];
-        }
+    try {
+        $quizid_to_delete = $_POST['quizid_to_delete'];
+        $sql = "DELETE FROM quiz WHERE quizid = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$quizid_to_delete]);
+        $feedback = ['message' => 'Quiz deleted successfully!', 'type' => 'success'];
+    } catch (PDOException $e) {
+        $feedback = ['message' => 'Error: Cannot delete this quiz. Please remove all associated questions and scores first.', 'type' => 'error'];
     }
 }
 
-// Include the header AFTER all PHP logic
 include_once 'header.php';
 ?>
 
@@ -60,9 +55,9 @@ include_once 'header.php';
             <a class="tab-link" onclick="showTab('manage_quiz_tab')"><i class="fa fa-list-alt"></i> Manage Quizzes</a>
         </nav>
         
-        <?php if (!empty($form_feedback)): ?>
-            <div class="message <?php echo $form_feedback['type']; ?>">
-                <?php echo $form_feedback['message']; ?>
+        <?php if ($feedback): ?>
+            <div class="message <?php echo $feedback['type']; ?>">
+                <?php echo htmlspecialchars($feedback['message']); ?>
             </div>
         <?php endif; ?>
 
@@ -88,31 +83,38 @@ include_once 'header.php';
                     </thead>
                     <tbody>
                         <?php
-                        if (isset($conn)) {
+                        $quizzes = [];
+                        $db_error = null;
+                        try {
                             $sql = "SELECT * FROM quiz ORDER BY quizid DESC";
-                            $res = mysqli_query($conn, $sql);
-                            if (mysqli_num_rows($res) > 0) {
-                                while ($row = mysqli_fetch_assoc($res)) {
-                                    $quiz_id = htmlspecialchars($row['quizid']);
-                                    $quiz_name = htmlspecialchars($row['quizname']);
-                                    echo "<tr>
-                                            <td>{$quiz_name}</td>
-                                            <td style='text-align: right;'>
-                                                <a href='addqs.php?q={$quiz_id}' class='btn' style='margin-right: 0.5rem;'>Add/View Q's</a>
-                                                <form method='POST' action='homestaff.php' style='display:inline;' onsubmit='return confirm(\"Are you sure you want to delete this quiz?\");'>
-                                                    <input type='hidden' name='quizid_to_delete' value='{$quiz_id}'>
-                                                    <button type='submit' name='delete_quiz' class='btn' style='background-color:#991b1b; border-color:#991b1b; color:#fee2e2;'>Delete</button>
-                                                </form>
-                                            </td>
-                                          </tr>";
-                                }
-                            } else {
-                                echo "<tr><td colspan='2' style='text-align:center;'>No quizzes created yet.</td></tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='2' style='text-align:center;'>{$db_error}</td></tr>";
+                            $stmt = $pdo->prepare($sql);
+                            $stmt->execute();
+                            $quizzes = $stmt->fetchAll();
+                        } catch (PDOException $e) {
+                            $db_error = "A database error occurred.";
                         }
-                        ?>
+                        
+                        if ($db_error): ?>
+                            <tr><td colspan='2' style='text-align:center;'><?php echo $db_error; ?></td></tr>
+                        <?php elseif (count($quizzes) > 0): ?>
+                            <?php foreach ($quizzes as $row):
+                                $quiz_id = htmlspecialchars($row['quizid']);
+                                $quiz_name = htmlspecialchars($row['quizname']);
+                            ?>
+                                <tr>
+                                    <td><?php echo $quiz_name; ?></td>
+                                    <td style='text-align: right;'>
+                                        <a href='addqs.php?q=<?php echo $quiz_id; ?>' class='btn' style='margin-right: 0.5rem;'>Add/View Q's</a>
+                                        <form method='POST' action='homestaff.php' style='display:inline;' onsubmit='return confirm("Are you sure you want to delete this quiz?");'>
+                                            <input type='hidden' name='quizid_to_delete' value='<?php echo $quiz_id; ?>'>
+                                            <button type='submit' name='delete_quiz' class='btn' style='background-color:#991b1b; border-color:#991b1b; color:#fee2e2;'>Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan='2' style='text-align:center;'>No quizzes created yet.</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -142,6 +144,5 @@ include_once 'header.php';
 </script>
 
 <?php
-if (isset($conn)) { mysqli_close($conn); }
 include_once 'footer.php';
 ?>

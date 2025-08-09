@@ -1,13 +1,17 @@
 <?php
+// The index page doesn't require session logic at the top,
+// so we can just include the header directly.
 include_once 'header.php';
 ?>
 
 <style>
     /* --- Styles specific to the Index Page --- */
+
+    /* Hero Section */
     .hero-section {
         text-align: center;
         padding: 6rem 1rem;
-        background: linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.9)), url('assets/img/hero-bg.jpg');
+        background: linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.9)), url('assets/img/hero-bg.jpg'); /* Optional: Add a subtle background image */
         background-size: cover;
         background-position: center;
         border-radius: 8px;
@@ -17,10 +21,10 @@ include_once 'header.php';
         font-size: 3.5rem;
         font-weight: 700;
         margin-bottom: 1rem;
-        color: #fff;
+        color: #fff; /* White text for high contrast */
     }
     .hero-section h1 .highlight {
-        color: var(--primary-color);
+        color: var(--primary-color); /* Use the theme's primary blue */
     }
     .hero-section p {
         font-size: 1.25rem;
@@ -33,6 +37,8 @@ include_once 'header.php';
         justify-content: center;
         gap: 1rem;
     }
+
+    /* Features Section */
     .features-section {
         padding: 2rem 0;
         text-align: center;
@@ -66,6 +72,7 @@ include_once 'header.php';
     .feature-card p {
         color: var(--text-secondary);
     }
+
 </style>
 
 <div class="container">
@@ -89,11 +96,13 @@ include_once 'header.php';
                 <h3>For Students</h3>
                 <p>Take a wide variety of quizzes, get instant results, and track your scores over time to see your progress.</p>
             </div>
+
             <div class="feature-card">
                 <div class="icon"><i class="fa fa-user-tie"></i></div>
                 <h3>For Staff</h3>
                 <p>Easily create, manage, and deploy quizzes. Monitor student performance with detailed analytics and leaderboards.</p>
             </div>
+
             <div class="feature-card">
                 <div class="icon"><i class="fa fa-desktop"></i></div>
                 <h3>Modern Interface</h3>
@@ -105,5 +114,6 @@ include_once 'header.php';
 </div>
 
 <?php
+// Finally, include the footer to close the page
 include_once 'footer.php';
 ?>

@@ -1,20 +1,19 @@
 <?php
 // This page handles the second step: verifying OTP and updating the password
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-// If the user hasn't been sent an OTP, redirect them
+
+// If the user hasn't been sent an OTP, redirect them to the start of the process
 if (!isset($_SESSION['otp']) || !isset($_SESSION['reset_email'])) {
     header("Location: forgot-password.php");
     exit();
 }
 
-require_once 'sql.php';
+// Include the modern PDO database connection
+require_once 'sql.php'; // This creates the $pdo object
 $feedback = null;
 
 if (isset($_POST['reset_password'])) {
-    $conn = mysqli_connect($host, $user, $ps, $project);
-    if (!$conn) {
-        $feedback = ['message' => 'Database connection error.', 'type' => 'error'];
-    } else {
+    try {
         $otp = $_POST['otp'];
         $new_password = $_POST['new_password'];
         $confirm_password = $_POST['confirm_password'];
@@ -24,12 +23,18 @@ if (isset($_POST['reset_password'])) {
         } elseif ($new_password !== $confirm_password) {
             $feedback = ['message' => 'The new passwords do not match.', 'type' => 'error'];
         } else {
+            // All good, update the password using a prepared statement
             $email = $_SESSION['reset_email'];
             $type = $_SESSION['reset_type'];
-            $safe_password = mysqli_real_escape_string($conn, $new_password); // You should HASH passwords in a real app
-
-            $sql = "UPDATE {$type} SET pw = '{$safe_password}' WHERE mail = '{$email}'";
-            if (mysqli_query($conn, $sql)) {
+            // In a real application, you should hash the password before saving
+            // $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            
+            // The table name is dynamic but validated, and columns are fixed
+            $sql = "UPDATE {$type} SET pw = ? WHERE mail = ?";
+            $stmt = $pdo->prepare($sql);
+            
+            if ($stmt->execute([$new_password, $email])) {
+                // Password updated, destroy session and redirect to login
                 session_destroy();
                 header("Location: login.php?reset=success");
                 exit();
@@ -37,7 +42,8 @@ if (isset($_POST['reset_password'])) {
                 $feedback = ['message' => 'Failed to update password. Please try again.', 'type' => 'error'];
             }
         }
-        mysqli_close($conn);
+    } catch (PDOException $e) {
+        $feedback = ['message' => 'A database error occurred.', 'type' => 'error'];
     }
 }
 

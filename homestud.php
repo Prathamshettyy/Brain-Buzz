@@ -15,14 +15,13 @@ $db_error = null;
 $quizzes = []; // Create an empty array to hold the quiz data
 
 try {
-    // Fetch quizzes using the new PDO connection
+    // This query correctly fetches ALL quizzes from the database
     $sql = "SELECT * FROM quiz ORDER BY quizid DESC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
-    $quizzes = $stmt->fetchAll(); // Fetch all quizzes into the array
+    $quizzes = $stmt->fetchAll(); // Gets all results
 } catch (PDOException $e) {
     $db_error = "A database error occurred. Please try again later.";
-    // Optional: log the actual error for debugging: error_log($e->getMessage());
 }
 ?>
 
@@ -45,8 +44,7 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    if ($db_error): ?>
+                    <?php if ($db_error): ?>
                         <tr><td colspan='2' style='text-align:center; color:#f87171;'><?php echo $db_error; ?></td></tr>
                     <?php elseif (count($quizzes) > 0): ?>
                         <?php foreach ($quizzes as $row): ?>
