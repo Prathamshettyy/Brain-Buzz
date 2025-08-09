@@ -53,7 +53,7 @@ include_once 'header.php';
 
         <?php
         if (isset($error_message)) {
-            echo '<p style="color: #f87171; text-align: center; margin-bottom: 1rem;">' . $error_message . '</p>';
+            echo '<p style="color: #f87171; text-align: center; margin-bottom: 1rem;">' . htmlspecialchars($error_message) . '</p>';
         }
         ?>
 
@@ -67,6 +67,9 @@ include_once 'header.php';
                 <input type="password" id="pw" name="pw" required>
             </div>
             <button type="submit" name="login_student" class="btn btn-solid" style="width:100%;">Login</button>
+             <div class="form-footer-link">
+                <a href="forgot-password.php">Forgot Password?</a>
+            </div>
         </form>
     </div>
 </div>
