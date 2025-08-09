@@ -20,7 +20,20 @@
 
   <link rel="stylesheet" href="assets/css/creativetim.min.css" type="text/css">
   
-
+<style>
+  html {
+    height: 100%;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  .section {
+    flex: 1;
+  }
+</style>
+</head>
 
 
 </head>
