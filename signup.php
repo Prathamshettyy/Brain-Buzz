@@ -1,88 +1,60 @@
 <?php
-session_start();
-require_once 'sql.php';
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'sql.php'; // Uses the new $pdo connection
 
-$message = '';
-$message_type = '';
+$feedback = null;
 
-if (isset($_POST['staffsu'])) {
-    $conn = mysqli_connect($host, $user, $ps, $project);
-    if (!$conn) {
-        $message = "Database connection failed.";
-        $message_type = 'error';
-    } else {
-        $fields = ['name2', 'staffid', 'mail2', 'phno2', 'dept2', 'dob2', 'gender2', 'password2', 'cpassword2'];
-        $staff_data = [];
-        $all_fields_present = true;
-        foreach ($fields as $field) {
-            if (isset($_POST[$field])) {
-                $staff_data[$field] = mysqli_real_escape_string($conn, $_POST[$field]);
-            } else {
-                $all_fields_present = false;
-                break;
-            }
+function handleSignup($pdo, $type) {
+    $table = ($type === 'student') ? 'student' : 'staff';
+    $is_student = ($type === 'student');
+    
+    // Define fields based on type
+    $fields = ['name', 'email', 'phone', 'dept', 'dob', 'gender', 'password', 'cpassword'];
+    if ($is_student) $fields[] = 'usn'; else $fields[] = 'staffid';
+    
+    $data = [];
+    foreach ($fields as $field) {
+        if (empty($_POST[$field])) return ['message' => 'All fields are required.', 'type' => 'error'];
+        $data[$field] = $_POST[$field];
+    }
+
+    if ($data['password'] !== $data['cpassword']) {
+        return ['message' => 'Passwords do not match.', 'type' => 'error'];
+    }
+
+    // In a real app, hash the password: $hashed_pw = password_hash($data['password'], PASSWORD_DEFAULT);
+    
+    try {
+        if ($is_student) {
+            $sql = "INSERT INTO student (usn, name, mail, phno, dept, gender, DOB, pw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$data['usn'], $data['name'], $data['email'], $data['phone'], $data['dept'], $data['gender'], $data['dob'], $data['password']]);
+        } else {
+            $sql = "INSERT INTO staff (staffid, name, mail, phno, dept, gender, DOB, pw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$data['staffid'], $data['name'], $data['email'], $data['phone'], $data['dept'], $data['gender'], $data['dob'], $data['password']]);
         }
-        if ($all_fields_present) {
-            if ($staff_data['password2'] !== $staff_data['cpassword2']) {
-                $message = "Passwords do not match.";
-                $message_type = 'error';
-            } else {
-                $sql = "INSERT INTO staff (staffid, name, mail, phno, dept, gender, DOB, pw) VALUES('{$staff_data['staffid']}', '{$staff_data['name2']}', '{$staff_data['mail2']}', '{$staff_data['phno2']}', '{$staff_data['dept2']}', '{$staff_data['gender2']}', '{$staff_data['dob2']}', '{$staff_data['password2']}')";
-                if (mysqli_query($conn, $sql)) {
-                    $message = "Staff account created successfully! You can now log in.";
-                    $message_type = 'success';
-                } else {
-                    $message = "An account with this Staff ID or Email may already exist.";
-                    $message_type = 'error';
-                }
-            }
-        }
-        mysqli_close($conn);
+        return ['message' => ucfirst($type) . ' account created successfully! You can now log in.', 'type' => 'success'];
+    } catch (PDOException $e) {
+        // Catches errors like duplicate entries
+        return ['message' => 'An account with these details may already exist.', 'type' => 'error'];
     }
 }
 
 if (isset($_POST['studsu'])) {
-    $conn = mysqli_connect($host, $user, $ps, $project);
-    if (!$conn) {
-        $message = "Database connection failed.";
-        $message_type = 'error';
-    } else {
-        $fields = ['name1', 'usn1', 'mail1', 'phno1', 'dept1', 'dob1', 'gender1', 'password1', 'cpassword1'];
-        $student_data = [];
-        $all_fields_present = true;
-        foreach ($fields as $field) {
-            if (isset($_POST[$field])) {
-                $student_data[$field] = mysqli_real_escape_string($conn, $_POST[$field]);
-            } else {
-                $all_fields_present = false;
-                break;
-            }
-        }
-        if ($all_fields_present) {
-            if ($student_data['password1'] !== $student_data['cpassword1']) {
-                $message = "Passwords do not match.";
-                $message_type = 'error';
-            } else {
-                $sql = "INSERT INTO student (usn, name, mail, phno, dept, gender, DOB, pw) VALUES('{$student_data['usn1']}', '{$student_data['name1']}', '{$student_data['mail1']}', '{$student_data['phno1']}', '{$student_data['dept1']}', '{$student_data['gender1']}', '{$student_data['dob1']}', '{$student_data['password1']}')";
-                if (mysqli_query($conn, $sql)) {
-                    $message = "Student account created successfully! You can now log in.";
-                    $message_type = 'success';
-                } else {
-                    $message = "An account with this USN or Email may already exist.";
-                    $message_type = 'error';
-                }
-            }
-        }
-        mysqli_close($conn);
-    }
+    $feedback = handleSignup($pdo, 'student');
+}
+if (isset($_POST['staffsu'])) {
+    $feedback = handleSignup($pdo, 'staff');
 }
 
 include_once 'header.php';
 ?>
 
 <style>
+    /* Styles for the tabbed form */
     .tab-nav { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
-    .tab-link { padding: 1rem 1.5rem; cursor: pointer; font-weight: 500; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: color 0.3s ease, border-color 0.3s ease; }
+    .tab-link { padding: 1rem 1.5rem; cursor: pointer; font-weight: 500; color: var(--text-secondary); border-bottom: 3px solid transparent; }
     .tab-link.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -100,10 +72,8 @@ include_once 'header.php';
             <p>Create an account to start your journey with us.</p>
         </div>
 
-        <?php if (!empty($message)): ?>
-            <div class="message <?php echo $message_type; ?>">
-                <?php echo $message; ?>
-            </div>
+        <?php if ($feedback): ?>
+            <div class="message <?php echo $feedback['type']; ?>"><?php echo $feedback['message']; ?></div>
         <?php endif; ?>
 
         <nav class="tab-nav">
@@ -114,21 +84,21 @@ include_once 'header.php';
         <div id="student" class="tab-content active">
             <form action="signup.php" method="POST" autocomplete="off">
                 <div class="form-grid">
-                    <div class="form-group"><label for="name1">Full Name</label><input type="text" name="name1" required></div>
-                    <div class="form-group"><label for="usn1">USN</label><input type="text" name="usn1" required></div>
-                    <div class="form-group"><label for="mail1">Email Address</label><input type="email" name="mail1" required></div>
-                    <div class="form-group"><label for="phno1">Phone Number</label><input type="tel" name="phno1" pattern="[6789][0-9]{9}" required></div>
-                    <div class="form-group"><label for="dept1">Department</label>
-                        <select name="dept1" required><option value="CSE">CSE</option><option value="ISE">ISE</option><option value="ECE">ECE</option><option value="EEE">EEE</option></select>
+                    <div class="form-group"><label>Full Name</label><input type="text" name="name" required></div>
+                    <div class="form-group"><label>USN</label><input type="text" name="usn" required></div>
+                    <div class="form-group"><label>Email Address</label><input type="email" name="email" required></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" name="phone" required></div>
+                    <div class="form-group"><label>Department</label>
+                        <select name="dept" required><option value="CSE">CSE</option><option value="ISE">ISE</option></select>
                     </div>
-                    <div class="form-group"><label for="dob1">Date of Birth</label><input type="date" name="dob1" required></div>
+                    <div class="form-group"><label>Date of Birth</label><input type="date" name="dob" required></div>
                 </div>
                 <div class="form-group"><label>Gender</label>
-                    <div style="display:flex; gap:1.5rem;"><label><input type="radio" name="gender1" value="M" checked> Male</label><label><input type="radio" name="gender1" value="F"> Female</label></div>
+                    <div style="display:flex; gap:1.5rem;"><label><input type="radio" name="gender" value="M" checked> Male</label><label><input type="radio" name="gender" value="F"> Female</label></div>
                 </div>
                 <div class="form-grid">
-                    <div class="form-group"><label for="password1">Password</label><input type="password" name="password1" required></div>
-                    <div class="form-group"><label for="cpassword1">Confirm Password</label><input type="password" name="cpassword1" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
+                    <div class="form-group"><label>Confirm Password</label><input type="password" name="cpassword" required></div>
                 </div>
                 <button type="submit" name="studsu" class="btn btn-solid" style="width:100%;">Create Student Account</button>
             </form>
@@ -137,21 +107,21 @@ include_once 'header.php';
         <div id="staff" class="tab-content">
             <form action="signup.php" method="POST" autocomplete="off">
                  <div class="form-grid">
-                    <div class="form-group"><label for="name2">Full Name</label><input type="text" name="name2" required></div>
-                    <div class="form-group"><label for="staffid">Staff ID</label><input type="text" name="staffid" required></div>
-                    <div class="form-group"><label for="mail2">Email Address</label><input type="email" name="mail2" required></div>
-                    <div class="form-group"><label for="phno2">Phone Number</label><input type="tel" name="phno2" pattern="[6789][0-9]{9}" required></div>
-                    <div class="form-group"><label for="dept2">Department</label>
-                        <select name="dept2" required><option value="CSE">CSE</option><option value="ISE">ISE</option><option value="ECE">ECE</option><option value="EEE">EEE</option></select>
+                    <div class="form-group"><label>Full Name</label><input type="text" name="name" required></div>
+                    <div class="form-group"><label>Staff ID</label><input type="text" name="staffid" required></div>
+                    <div class="form-group"><label>Email Address</label><input type="email" name="email" required></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" name="phone" required></div>
+                    <div class="form-group"><label>Department</label>
+                        <select name="dept" required><option value="CSE">CSE</option><option value="ISE">ISE</option></select>
                     </div>
-                     <div class="form-group"><label for="dob2">Date of Joining</label><input type="date" name="dob2" required></div>
+                     <div class="form-group"><label>Date of Joining</label><input type="date" name="dob" required></div>
                 </div>
                 <div class="form-group"><label>Gender</label>
-                    <div style="display:flex; gap:1.5rem;"><label><input type="radio" name="gender2" value="M" checked> Male</label><label><input type="radio" name="gender2" value="F"> Female</label></div>
+                    <div style="display:flex; gap:1.5rem;"><label><input type="radio" name="gender" value="M" checked> Male</label><label><input type="radio" name="gender" value="F"> Female</label></div>
                 </div>
                 <div class="form-grid">
-                    <div class="form-group"><label for="password2">Password</label><input type="password" name="password2" required></div>
-                    <div class="form-group"><label for="cpassword2">Confirm Password</label><input type="password" name="cpassword2" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" name="password" required></div>
+                    <div class="form-group"><label>Confirm Password</label><input type="password" name="cpassword" required></div>
                 </div>
                 <button type="submit" name="staffsu" class="btn btn-solid" style="width:100%;">Create Staff Account</button>
             </form>
@@ -161,15 +131,11 @@ include_once 'header.php';
 
 <script>
     function showTab(tabName) {
-        const contents = document.querySelectorAll('.tab-content');
-        contents.forEach(content => content.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById(tabName).classList.add('active');
-        const links = document.querySelectorAll('.tab-link');
-        links.forEach(link => link.classList.remove('active'));
-        document.querySelector(`.tab-link[onclick="showTab('${tabName}')"]`).classList.add('active');
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
     }
 </script>
 
-<?php
-include_once 'footer.php';
-?>
+<?php include_once 'footer.php'; ?>
