@@ -1,23 +1,28 @@
 <?php
-// Start session and check if the user is logged in as a student
+// Start session and include the new PDO connection file
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Redirect to login if not logged in or not a student
 if (!isset($_SESSION['usn'])) {
     header("Location: login.php");
     exit();
 }
 
-// Include the database connection and header
-require_once 'sql.php';
+require_once 'sql.php'; // This now creates the $pdo object
 include_once 'header.php';
 
-// Establish database connection
-$conn = mysqli_connect($host, $user, $ps, $project);
-if (!$conn) {
-    $db_error = "Could not connect to the database. Please try again later.";
+$db_error = null;
+$quizzes = []; // Create an empty array to hold the quiz data
+
+try {
+    // Fetch quizzes using the new PDO connection
+    $sql = "SELECT * FROM quiz ORDER BY quizid DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $quizzes = $stmt->fetchAll(); // Fetch all quizzes into the array
+} catch (PDOException $e) {
+    $db_error = "A database error occurred. Please try again later.";
+    // Optional: log the actual error for debugging: error_log($e->getMessage());
 }
 ?>
 
@@ -41,34 +46,20 @@ if (!$conn) {
                 </thead>
                 <tbody>
                     <?php
-                    // Fetch and display quizzes from the database
-                    if (isset($conn)) {
-                        $sql = "SELECT * FROM quiz";
-                        $res = mysqli_query($conn, $sql);
-
-                        if (mysqli_num_rows($res) > 0) {
-                            while ($row = mysqli_fetch_assoc($res)) {
-                                // Sanitize data before displaying
-                                $quiz_id = htmlspecialchars($row['quizid']);
-                                $quiz_name = htmlspecialchars($row['quizname']);
-                                
-                                // **FIX:** Removed the 'subject' column from the display
-                                echo "<tr>
-                                        <td>{$quiz_name}</td>
-                                        <td style='text-align: right;'>
-                                            <a href='takeq.php?q={$quiz_id}' class='btn'>Take Quiz</a>
-                                        </td>
-                                      </tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='2' style='text-align:center; color:var(--text-secondary);'>No quizzes are available at the moment. Please check back later.</td></tr>";
-                        }
-                        mysqli_close($conn);
-                    } else {
-                        // Display database connection error
-                        echo "<tr><td colspan='2' style='text-align:center; color:#f87171;'>{$db_error}</td></tr>";
-                    }
-                    ?>
+                    if ($db_error): ?>
+                        <tr><td colspan='2' style='text-align:center; color:#f87171;'><?php echo $db_error; ?></td></tr>
+                    <?php elseif (count($quizzes) > 0): ?>
+                        <?php foreach ($quizzes as $row): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['quizname']); ?></td>
+                                <td style='text-align: right;'>
+                                    <a href='takeq.php?q=<?php echo htmlspecialchars($row['quizid']); ?>' class='btn'>Take Quiz</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan='2' style='text-align:center; color:var(--text-secondary);'>No quizzes are available at the moment.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
