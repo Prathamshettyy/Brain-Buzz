@@ -3,39 +3,33 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Redirect to login if not logged in as a student
 if (!isset($_SESSION['usn'])) {
     header("Location: login.php");
     exit();
 }
 
-// Include database connection and establish a connection
-require_once 'sql.php';
-$conn = mysqli_connect($host, $user, $ps, $project);
-if (!$conn) {
-    $db_error = "Could not connect to the database. Please try again later.";
-}
+// Include the modern PDO database connection
+require_once 'sql.php'; // This creates the $pdo object
+
+$feedback = null;
 
 // --- Logic to Handle Quiz Submission ---
 if (isset($_POST['submit_quiz']) && isset($_POST['quizid'])) {
-    if (isset($conn)) {
-        $quizid = mysqli_real_escape_string($conn, $_POST['quizid']);
-        $usn = $_SESSION['usn']; 
-        $submitted_answers = $_POST['answers']; // This will be a numerically indexed array
-        
+    try {
+        $quizid = $_POST['quizid'];
+        $usn = $_SESSION['usn'];
+        $submitted_answers = $_POST['answers'] ?? [];
         $score = 0;
-        
-        // Fetch the correct answers from the database IN ORDER
-        $sql_answers = "SELECT answer FROM questions WHERE quizid = '{$quizid}'";
-        $res_answers = mysqli_query($conn, $sql_answers);
-        
-        $correct_answers = [];
-        while($row = mysqli_fetch_assoc($res_answers)) {
-            $correct_answers[] = $row['answer'];
-        }
 
-        // Compare submitted answers with correct answers by index
+        // Fetch the correct answers from the database using PDO
+        $sql_answers = "SELECT answer FROM questions WHERE quizid = ?";
+        $stmt_answers = $pdo->prepare($sql_answers);
+        $stmt_answers->execute([$quizid]);
+        
+        // Fetch all correct answers into a simple array
+        $correct_answers = $stmt_answers->fetchAll(PDO::FETCH_COLUMN);
+
+        // Compare submitted answers with correct answers by their order
         foreach ($submitted_answers as $index => $user_answer) {
             if (isset($correct_answers[$index]) && $user_answer === $correct_answers[$index]) {
                 $score++;
@@ -43,16 +37,19 @@ if (isset($_POST['submit_quiz']) && isset($_POST['quizid'])) {
         }
         
         $total_questions = count($correct_answers);
-        $remark = ($score / $total_questions) >= 0.5 ? 'Pass' : 'Fail';
+        $remark = ($total_questions > 0 && ($score / $total_questions) >= 0.5) ? 'Pass' : 'Fail';
 
-        $insert_sql = "INSERT INTO score (score, usn, quizid, totalscore, remark) VALUES ('$score', '$usn', '$quizid', '$total_questions', '$remark')";
+        // Insert the final score into the database using a prepared statement
+        $insert_sql = "INSERT INTO score (score, usn, quizid, totalscore, remark) VALUES (?, ?, ?, ?, ?)";
+        $stmt_insert = $pdo->prepare($insert_sql);
+        $stmt_insert->execute([$score, $usn, $quizid, $total_questions, $remark]);
         
-        if(mysqli_query($conn, $insert_sql)) {
-            header("Location: studscorecard.php");
-            exit();
-        } else {
-             $db_error = "Error saving your score. You may have already completed this quiz.";
-        }
+        // Redirect to the scorecard to show the result
+        header("Location: studscorecard.php");
+        exit();
+
+    } catch (PDOException $e) {
+        $feedback = ['message' => 'Error saving your score. You may have already completed this quiz.', 'type' => 'error'];
     }
 }
 
@@ -60,36 +57,48 @@ if (isset($_POST['submit_quiz']) && isset($_POST['quizid'])) {
 include_once 'header.php';
 ?>
 
-<style>
-    .question-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
-    .question-text { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; color: var(--text-primary); }
-    .options-group label { display: block; background-color: var(--bg-color); padding: 1rem; margin-bottom: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); cursor: pointer; transition: border-color 0.3s ease, background-color 0.3s ease; }
-    .options-group label:hover { border-color: var(--primary-color); }
-    .options-group input[type="radio"] { margin-right: 10px; }
-</style>
-
 <div class="container">
     <?php
-    // --- Logic to Display The Quiz ---
-    if (isset($_GET['q']) && isset($conn)) {
-        $quizid = mysqli_real_escape_string($conn, $_GET['q']);
+    $quiz_name = "Quiz";
+    $questions = [];
+    $quizid = $_GET['q'] ?? null;
 
-        $sql_quiz_title = "SELECT quizname FROM quiz WHERE quizid = '{$quizid}'";
-        $res_quiz_title = mysqli_query($conn, $sql_quiz_title);
-        $quiz_row = mysqli_fetch_assoc($res_quiz_title);
-        $quiz_name = $quiz_row ? htmlspecialchars($quiz_row['quizname']) : "Quiz";
+    if ($quizid) {
+        try {
+            // Fetch quiz title using PDO
+            $sql_quiz_title = "SELECT quizname FROM quiz WHERE quizid = ?";
+            $stmt_title = $pdo->prepare($sql_quiz_title);
+            $stmt_title->execute([$quizid]);
+            $quiz_row = $stmt_title->fetch();
+            if ($quiz_row) {
+                $quiz_name = htmlspecialchars($quiz_row['quizname']);
+            }
 
-        $sql_questions = "SELECT * FROM questions WHERE quizid = '{$quizid}'";
-        $res_questions = mysqli_query($conn, $sql_questions);
-        
-        echo "<h2 style='margin-bottom:1rem;'>Taking Quiz: {$quiz_name}</h2>";
+            // Fetch all questions for the quiz using PDO
+            $sql_questions = "SELECT * FROM questions WHERE quizid = ?";
+            $stmt_questions = $pdo->prepare($sql_questions);
+            $stmt_questions->execute([$quizid]);
+            $questions = $stmt_questions->fetchAll();
 
-        if (mysqli_num_rows($res_questions) > 0) {
-            echo "<form method='POST' action='takeq.php'>";
-            echo "<input type='hidden' name='quizid' value='{$quizid}'>";
+        } catch (PDOException $e) {
+            $feedback = ['message' => 'A database error occurred while loading the quiz.', 'type' => 'error'];
+        }
+    }
+    ?>
+
+    <h2 style='margin-bottom:1rem;'>Taking Quiz: <?php echo $quiz_name; ?></h2>
+
+    <?php if ($feedback): ?>
+        <div class="message <?php echo $feedback['type']; ?>"><?php echo $feedback['message']; ?></div>
+    <?php endif; ?>
+
+    <?php if (count($questions) > 0): ?>
+        <form method='POST' action='takeq.php'>
+            <input type='hidden' name='quizid' value='<?php echo htmlspecialchars($quizid); ?>'>
             
-            $q_index = 0; // Use a simple numeric index
-            while ($row = mysqli_fetch_assoc($res_questions)) {
+            <?php
+            $q_index = 0;
+            foreach ($questions as $row) {
                 $question = htmlspecialchars($row['qs']);
                 $options = [
                     htmlspecialchars($row['op1']),
@@ -98,36 +107,36 @@ include_once 'header.php';
                     htmlspecialchars($row['answer'])
                 ];
                 shuffle($options);
-
-                echo "<div class='question-card'>";
-                echo "<p class='question-text'>".($q_index + 1).". {$question}</p>";
-                echo "<div class='options-group'>";
-                
-                foreach ($options as $option) {
-                    // **FIX:** The name of the radio button now uses a simple numeric index.
-                    echo "<label><input type='radio' name='answers[{$q_index}]' value='{$option}' required> {$option}</label>";
-                }
-
-                echo "</div></div>";
+                ?>
+                <div class='question-card'>
+                    <p class='question-text'><?php echo ($q_index + 1) . ". " . $question; ?></p>
+                    <div class='options-group'>
+                        <?php foreach ($options as $option): ?>
+                            <label><input type='radio' name='answers[<?php echo $q_index; ?>]' value='<?php echo $option; ?>' required> <?php echo $option; ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php
                 $q_index++;
             }
-
-            echo "<button type='submit' name='submit_quiz' class='btn btn-solid' style='width:100%; padding: 1rem;'>Submit My Answers</button>";
-            echo "</form>";
-
-        } else {
-            echo "<div class='card' style='text-align:center;'><p>This quiz has no questions yet. Please check back later.</p></div>";
-        }
-    } elseif (isset($db_error)) {
-        echo "<div class='card' style='text-align:center;'><p style='color:#f87171;'>{$db_error}</p></div>";
-    } else {
-         echo "<div class='card' style='text-align:center;'><p>No quiz selected. Please go back to the dashboard and choose a quiz.</p></div>";
-    }
-
-    if (isset($conn)) { mysqli_close($conn); }
-    ?>
+            ?>
+            <button type='submit' name='submit_quiz' class='btn btn-solid' style='width:100%; padding: 1rem;'>Submit My Answers</button>
+        </form>
+    <?php elseif (!$feedback && $quizid): ?>
+        <div class='card' style='text-align:center;'><p>This quiz has no questions yet. Please check back later.</p></div>
+    <?php elseif (!$quizid): ?>
+        <div class='card' style='text-align:center;'><p>No quiz selected. Please go back to the dashboard and choose a quiz.</p></div>
+    <?php endif; ?>
 </div>
 
-<?php
-include_once 'footer.php';
-?>
+<style>
+    .question-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .question-text { font-size: 1.2rem; font-weight: 500; margin-bottom: 1.5rem; color: var(--text-primary); }
+    .options-group label { display: block; background-color: var(--bg-color); padding: 1rem; margin-bottom: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); cursor: pointer; transition: border-color 0.3s ease, background-color 0.3s ease; }
+    .options-group label:hover { border-color: var(--primary-color); }
+    .options-group input[type="radio"] { margin-right: 10px; }
+    .message { padding: 1rem; border-radius: 6px; text-align: center; margin-bottom: 1.5rem; font-weight: 500; }
+    .message.error { background-color: #991b1b; color: #fee2e2; }
+</style>
+
+<?php include_once 'footer.php'; ?>

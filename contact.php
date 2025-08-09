@@ -32,7 +32,7 @@ if (isset($_POST["submit"])) {
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = 'randomshithere99@gmail.com'; 
-            $mail->Password   = 'dxkp ltvq orpv dltj'; // Your new App Password
+            $mail->Password   = 'dxkp ltvq orpv dltj'; // Your App Password
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
             $mail->Port       = 465;
 
@@ -65,6 +65,7 @@ include_once 'header.php';
         <p style="color:var(--text-secondary);">We'd love to hear from you. Choose an option below or send us a message.</p>
     </div>
 
+    <!-- Quick Contact Action Cards -->
     <div class="contact-actions-grid">
          <a href="tel:+919480242018" class="card-link">
             <div class="action-card"><i class="fa fa-phone"></i><h3>Call Us</h3><p>+91 94802 42018</p></div>
@@ -77,6 +78,7 @@ include_once 'header.php';
         </a>
     </div>
 
+    <!-- Contact Form Card -->
     <div class="form-container" style="max-width: 800px; margin-top: 2rem;">
         <div class="card">
              <div class="card-header"><h3>Or Send a Message Directly</h3></div>

@@ -8,34 +8,37 @@ if (!isset($_SESSION['staffid'])) {
     exit();
 }
 
-// Include database connection
-require_once 'sql.php';
-$conn = mysqli_connect($host, $user, $ps, $project);
-if (!$conn) {
-    $db_error = "Could not connect to the database.";
-}
+// Include the modern PDO database connection
+require_once 'sql.php'; // This creates the $pdo object
+
+$form_error = null;
 
 // --- Handle Form Submission for Creating a New Quiz ---
 if (isset($_POST['create_quiz'])) {
-    if (isset($conn)) {
-        $quiz_name = mysqli_real_escape_string($conn, $_POST['quiz_name']);
-        
-        // This is the staff member's ID who is creating the quiz
+    try {
+        $quiz_name = $_POST['quiz_name'];
         $staff_id = $_SESSION['staffid']; 
         
-        // SQL to insert the new quiz
-        $sql = "INSERT INTO quiz (quizname, staffid) VALUES ('$quiz_name', '$staff_id')";
+        // Use a prepared statement to securely insert the new quiz
+        $sql = "INSERT INTO quiz (quizname, staffid) VALUES (?, ?)";
+        $stmt = $pdo->prepare($sql);
         
-        if (mysqli_query($conn, $sql)) {
+        if ($stmt->execute([$quiz_name, $staff_id])) {
             // Get the ID of the quiz we just created
-            $new_quiz_id = mysqli_insert_id($conn);
+            $new_quiz_id = $pdo->lastInsertId();
             
             // Redirect to the add questions page for the new quiz
             header("Location: addqs.php?q=" . $new_quiz_id);
             exit();
         } else {
-            // Handle potential errors, like a duplicate quiz name
-            $form_error = "Error: A quiz with this name might already exist.";
+            $form_error = "Failed to create the quiz.";
+        }
+    } catch (PDOException $e) {
+        // This error often happens if the quiz name is not unique
+        if ($e->getCode() == 23000 || $e->getCode() == 23505) {
+            $form_error = "Error: A quiz with this name already exists.";
+        } else {
+            $form_error = "A database error occurred.";
         }
     }
 }
@@ -57,9 +60,9 @@ include_once 'header.php';
                 <p>Enter a name for your new quiz to get started.</p>
             </div>
             
-            <?php if (!empty($form_error)): ?>
+            <?php if ($form_error): ?>
                 <div class="message error">
-                    <?php echo $form_error; ?>
+                    <?php echo htmlspecialchars($form_error); ?>
                 </div>
             <?php endif; ?>
 
@@ -77,11 +80,9 @@ include_once 'header.php';
 <style>
     /* These styles are for the success/error messages */
     .message { padding: 1rem; border-radius: 6px; text-align: center; margin-bottom: 1.5rem; font-weight: 500; }
-    .message.success { background-color: #166534; color: #dcfce7; }
     .message.error { background-color: #991b1b; color: #fee2e2; }
 </style>
 
 <?php
-if (isset($conn)) { mysqli_close($conn); }
 include_once 'footer.php';
 ?>

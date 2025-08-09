@@ -1,7 +1,7 @@
 <?php
 // This page handles the first step of password reset: sending the OTP
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-require_once 'sql.php';
+require_once 'sql.php'; // This creates the $pdo object
 
 // Include PHPMailer
 require 'PHPMailer/src/Exception.php';
@@ -14,17 +14,17 @@ use PHPMailer\PHPMailer\Exception;
 $feedback = null;
 
 if (isset($_POST['send_otp'])) {
-    $conn = mysqli_connect($host, $user, $ps, $project);
-    if (!$conn) {
-        $feedback = ['message' => 'Database connection error.', 'type' => 'error'];
-    } else {
-        $email = mysqli_real_escape_string($conn, $_POST['email']);
-        $type = mysqli_real_escape_string($conn, $_POST['type']);
+    try {
+        $email = $_POST['email'];
+        $type = $_POST['type']; // 'student' or 'staff'
         
-        $sql = "SELECT * FROM {$type} WHERE mail = '{$email}'";
-        $res = mysqli_query($conn, $sql);
+        // Use a prepared statement to securely check if the user exists
+        $sql = "SELECT * FROM {$type} WHERE mail = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$email]);
+        $user_exists = $stmt->fetch();
 
-        if (mysqli_num_rows($res) > 0) {
+        if ($user_exists) {
             $otp = rand(100000, 999999);
             $_SESSION['otp'] = $otp;
             $_SESSION['reset_email'] = $email;
@@ -37,7 +37,7 @@ if (isset($_POST['send_otp'])) {
                 $mail->Host       = 'smtp.gmail.com';
                 $mail->SMTPAuth   = true;
                 $mail->Username   = 'randomshithere99@gmail.com'; 
-                $mail->Password   = 'dxkp ltvq orpv dltj'; // Your new App Password
+                $mail->Password   = 'dxkp ltvq orpv dltj'; // Your App Password
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
                 $mail->Port       = 465;
 
@@ -59,7 +59,8 @@ if (isset($_POST['send_otp'])) {
         } else {
             $feedback = ['message' => 'No account found with that email for the selected user type.', 'type' => 'error'];
         }
-        mysqli_close($conn);
+    } catch (PDOException $e) {
+        $feedback = ['message' => 'A database error occurred.', 'type' => 'error'];
     }
 }
 
