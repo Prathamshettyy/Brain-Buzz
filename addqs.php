@@ -1,5 +1,5 @@
 <?php
-// Start session and check if the user is logged in as a staff member
+// **FIX:** Start the session and check if the user is logged in as a staff member
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -38,7 +38,6 @@ function addQuestion($pdo, $quizid) {
         $stmt->execute($params);
         return ['message' => 'Question added successfully!', 'type' => 'success'];
     } catch (PDOException $e) {
-        // This error often happens if the question text is not unique
         if ($e->getCode() == 23000 || $e->getCode() == 23505) {
             return ['message' => 'Error: This exact question may already exist in the quiz.', 'type' => 'error'];
         }
@@ -141,28 +140,7 @@ include_once 'header.php';
     @media (max-width: 992px) { .manage-questions-layout { grid-template-columns: 1fr; } }
     .message { padding: 1rem; border-radius: 6px; text-align: center; margin-bottom: 1.5rem; font-weight: 500; }
     .message.success { background-color: #166534; color: #dcfce7; }
-    .message.error { background-color: #991b_model
-Of course. I have reviewed the `logout.php` file you provided.
+    .message.error { background-color: #991b1b; color: #fee2e2; }
+</style>
 
-The code is **perfectly correct** and already follows best practices for a logout script. It is secure and does exactly what it needs to do: it completely destroys the user's session and redirects them to the homepage.
-
-Because this file has no database connection, it **does not need any changes for PDO**. It will work correctly on both your local server and on Render.
-
-For your final verification, here is the complete and correct code for your `logout.php` file. No changes were needed.
-
-### **`logout.php` (Final and Correct Code)**
-```php
-<?php
-    // Start the session so we can access it
-    session_start();
-
-    // Unset all session variables
-    session_unset();
-
-    // Destroy the session completely
-    session_destroy();
-
-    // Redirect the user to the homepage
-    header("location: index.php");
-    exit(); // Always call exit() after a header redirect
-?>
+<?php include_once 'footer.php'; ?>

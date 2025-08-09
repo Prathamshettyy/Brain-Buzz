@@ -21,9 +21,8 @@ try {
     $sql = "SELECT * FROM student WHERE usn = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$usn]);
-    $student_details = $stmt->fetch(); // Fetch the single row of data
+    $student_details = $stmt->fetch();
 
-    // If no user is found, it's an issue (shouldn't happen if logged in)
     if (!$student_details) {
         $db_error = "Could not retrieve your profile information.";
     }
@@ -44,38 +43,38 @@ try {
         <div class="profile-container">
             <div class="card profile-avatar-card">
                 <img src="assets/img/student.jpg" alt="Student Avatar">
-                <h3><?php echo htmlspecialchars($student_details['name']); ?></h3>
-                <p style="color: var(--text-secondary);"><?php echo htmlspecialchars($student_details['dept']); ?> Engineering</p>
+                <h3><?php echo htmlspecialchars($student_details['name'] ?? 'Student'); ?></h3>
+                <p style="color: var(--text-secondary);"><?php echo htmlspecialchars($student_details['dept'] ?? 'N/A'); ?> Engineering</p>
             </div>
 
             <div class="card profile-details-card">
                 <div class="detail-item">
                     <span class="label">Full Name</span>
-                    <span class="value"><?php echo htmlspecialchars($student_details['name']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['name'] ?? 'Not provided'); ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">USN</span>
-                    <span class="value"><?php echo htmlspecialchars($student_details['usn']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['usn'] ?? 'Not provided'); ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Email</span>
-                    <span class="value"><?php echo htmlspecialchars($student_details['mail']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['mail'] ?? 'Not provided'); ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Phone</span>
-                    <span class="value"><?php echo htmlspecialchars($student_details['phno']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['phno'] ?? 'Not provided'); ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Department</span>
-                    <span class="value"><?php echo htmlspecialchars($student_details['dept']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['dept'] ?? 'Not provided'); ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Gender</span>
-                    <span class="value"><?php echo ($student_details['gender'] === 'M') ? 'Male' : 'Female'; ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['gender'] ?? 'Not provided'); ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Date of Birth</span>
-                    <span class="value"><?php echo htmlspecialchars($student_details['DOB']); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($student_details['DOB'] ?? 'Not provided'); ?></span>
                 </div>
             </div>
         </div>
