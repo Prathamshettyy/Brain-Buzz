@@ -3,9 +3,9 @@
 // Works with both WAMP (local) and Render (production)
 
 // Check if we're on Render (DATABASE_URL environment variable exists)
-if (isset($_ENV['DATABASE_URL'])) {
+if (getenv('DATABASE_URL')) {
     // RENDER PRODUCTION ENVIRONMENT (PostgreSQL)
-    $database_url = $_ENV['DATABASE_URL'];
+    $database_url = getenv('DATABASE_URL');
     $url_parts = parse_url($database_url);
     
     $host = $url_parts['host'];
@@ -20,19 +20,16 @@ if (isset($_ENV['DATABASE_URL'])) {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         
-        // For backward compatibility with existing code
-        $conn = $pdo;
-        
     } catch(PDOException $e) {
-        die("PostgreSQL Connection failed: " . $e->getMessage());
+        die("PostgreSQL Connection failed on Render: " . $e->getMessage());
     }
     
 } else {
     // LOCAL DEVELOPMENT ENVIRONMENT (MySQL/WAMP)
     $host = 'localhost';
     $user = 'root';
-    $password = '';  // Your $ps variable was empty
-    $dbname = 'quiz'; // Your $project variable
+    $password = '';  // Your local WAMP password
+    $dbname = 'quiz'; // Your local database name
     
     // Create MySQL PDO connection
     try {
@@ -40,16 +37,11 @@ if (isset($_ENV['DATABASE_URL'])) {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         
-        // For backward compatibility with existing code
-        $conn = $pdo;
-        
     } catch(PDOException $e) {
-        die("MySQL Connection failed: " . $e->getMessage());
+        die("MySQL Connection failed locally: " . $e->getMessage());
     }
 }
 
-// Legacy variable names for backward compatibility
-$project = $dbname ?? 'quiz';
-$ps = $password ?? '';
-
+// For backward compatibility, you can still have these if needed, but we will primarily use $pdo.
+$conn = $pdo; 
 ?>

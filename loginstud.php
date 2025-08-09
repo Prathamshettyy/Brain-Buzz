@@ -1,23 +1,30 @@
 <?php
-session_start();
+// Start session and include the new PDO connection file
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'sql.php'; // This now creates the $pdo object
+
+$error_message = null;
 
 if (isset($_POST['login_student'])) {
-    require_once 'sql.php';
-    $conn = mysqli_connect($host, $user, $ps, $project);
-    if (!$conn) {
-        $error_message = "Database error. Please try again later.";
-    } else {
-        $usn = mysqli_real_escape_string($conn, $_POST['usn']);
-        $password = mysqli_real_escape_string($conn, $_POST['pw']);
-        $sql = "SELECT * FROM student WHERE usn='{$usn}'";
-        $res = mysqli_query($conn, $sql);
+    try {
+        // Use prepared statements for security
+        $sql = "SELECT * FROM student WHERE usn = ?";
+        $stmt = $pdo->prepare($sql);
+        
+        // The execute method automatically handles sanitizing the input
+        $stmt->execute([$_POST['usn']]); 
+        
+        $row = $stmt->fetch(); // Fetch the first matching row
 
-        if ($row = mysqli_fetch_assoc($res)) {
-            if ($password === $row['pw']) {
+        if ($row) {
+            // For production, you should use password_verify()
+            if ($_POST['pw'] === $row['pw']) {
+                // Set session variables for the student
                 $_SESSION["name"] = $row['name'];
                 $_SESSION["usn"] = $row['usn'];
                 $_SESSION["email"] = $row['mail'];
                 $_SESSION["acc_type"] = 'student';
+
                 header("Location: homestud.php");
                 exit();
             } else {
@@ -26,10 +33,14 @@ if (isset($_POST['login_student'])) {
         } else {
             $error_message = "Invalid USN or Password.";
         }
-        mysqli_close($conn);
+    } catch (PDOException $e) {
+        // If there's a database error, show a generic message
+        $error_message = "A database error occurred. Please try again later.";
+        // Optional: log the actual error for debugging: error_log($e->getMessage());
     }
 }
 
+// Now we include the new header
 include_once 'header.php';
 ?>
 
@@ -56,9 +67,6 @@ include_once 'header.php';
                 <input type="password" id="pw" name="pw" required>
             </div>
             <button type="submit" name="login_student" class="btn btn-solid" style="width:100%;">Login</button>
-            <div class="form-footer-link">
-    <a href="forgot-password.php">Forgot Password?</a>
-</div>
         </form>
     </div>
 </div>
