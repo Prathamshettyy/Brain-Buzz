@@ -1,296 +1,230 @@
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Database: `new`
---
-
-DELIMITER $$
---
--- Procedures
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `leaderboard` ()  NO SQL
-select q.quizname,s.score,s.totalscore,st.usn,st.name,s.usn
- from score s,student st,quiz q 
- where s.usn=st.usn and q.quizid=s.quizid 
- order by score DESC$$
-
-DELIMITER ;
+BEGIN;
 
 -- --------------------------------------------------------
+-- Database objects for Brain-Buzz converted to PostgreSQL
+-- --------------------------------------------------------
 
---
--- Table structure for table `dept`
---
+-- Table: dept
+CREATE TABLE dept (
+  dept_id INTEGER PRIMARY KEY,
+  dept_name VARCHAR(3)
+);
 
-CREATE TABLE `dept` (
-  `dept_id` int(11) NOT NULL,
-  `dept_name` varchar(3) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `dept`
---
-
-INSERT INTO `dept` (`dept_id`, `dept_name`) VALUES
+INSERT INTO dept (dept_id, dept_name) VALUES
 (1, 'CSE'),
 (2, 'ISE'),
 (3, 'ECE'),
 (4, 'EEE');
 
--- --------------------------------------------------------
+-- Table: quiz
+CREATE TABLE quiz (
+  quizid SERIAL PRIMARY KEY,
+  quizname VARCHAR(100) NOT NULL,
+  date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  staffid VARCHAR(30) NOT NULL
+);
 
---
--- Table structure for table `questions`
---
+-- Insert the sample row with explicit id; set sequence later
+INSERT INTO quiz (quizid, quizname, date_created, staffid) VALUES
+(29, 'cyber security', '2024-12-27 17:43:34', '101');
 
-CREATE TABLE `questions` (
-  `qs` varchar(200) NOT NULL,
-  `op1` varchar(30) NOT NULL,
-  `op2` varchar(30) NOT NULL,
-  `op3` varchar(30) NOT NULL,
-  `answer` varchar(30) NOT NULL,
-  `quizid` int(11) NOT NULL,
-  `question_id` int(20) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+-- Table: student
+CREATE TABLE student (
+  usn VARCHAR(10) PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  mail VARCHAR(255) NOT NULL,
+  phno VARCHAR(20) NOT NULL,
+  gender VARCHAR(1) NOT NULL,
+  DOB VARCHAR(20) NOT NULL,
+  pw VARCHAR(200) NOT NULL,
+  dept VARCHAR(3)
+);
 
---
--- Dumping data for table `questions`
---
+INSERT INTO student (usn, name, mail, phno, gender, DOB, pw, dept) VALUES
+('4SC22CS022', 'Student', 'student@sahyadri.com', '8786788909', 'M', '2001-01-08', 'student@123', 'CSE');
 
-INSERT INTO `questions` (`qs`, `op1`, `op2`, `op3`, `answer`, `quizid`, `question_id`) VALUES
-('Which of the following usually observe each activity on the internet of the victim, gather all information in the background, and send it to someone else?', 'Malware', 'Spyware', 'Adware', 'All of the above', 29, 15),
-(' Which one of the following is a type of antivirus program?', 'Quick heal', 'Mcafee', 'Kaspersky', 'All of the above', 29, 16),
-('Which one of the following usually used in the process of Wi-Fi-hacking?', 'Wireshark', 'Norton', 'Nmap', 'Aircrack-ng', 29, 17),
-('Which of these is a standard interface for serial data transmission?', 'ASCII', 'Centronics', '2', 'RS232C', 29, 18),
-('Which type of topology is best suited for large businesses which must carefully control and coordinate the operation of distributed branch outlets?', 'Ring', 'Local area', 'Hierarchical', 'Star', 29, 19),
-('Parity bits\" are used for which of the following purposes?', 'Encryption of data', 'To transmit faster', 'To identify the user', 'To detect errors', 29, 20),
-('Which sports person is nick named Dennis the Menace?', 'B John McEnroe', 'Sampras', 'C Jim Courier', 'A Pete Sampras', 31, 21);
+-- Table: staff
+CREATE TABLE staff (
+  staffid VARCHAR(10) PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  mail VARCHAR(255) NOT NULL,
+  phno VARCHAR(20) NOT NULL,
+  gender VARCHAR(1) NOT NULL,
+  DOB VARCHAR(20) NOT NULL,
+  pw VARCHAR(200) NOT NULL,
+  dept VARCHAR(3)
+);
 
--- --------------------------------------------------------
+INSERT INTO staff (staffid, name, mail, phno, gender, DOB, pw, dept) VALUES
+('101', 'Teacher', 'staff@sahyadri.com', '9878987878', 'M', '1992-01-06', 'password', 'ISE');
 
---
--- Table structure for table `quiz`
---
+-- Table: questions
+CREATE TABLE questions (
+  question_id SERIAL PRIMARY KEY,
+  qs VARCHAR(200) NOT NULL UNIQUE,
+  op1 VARCHAR(255) NOT NULL,
+  op2 VARCHAR(255) NOT NULL,
+  op3 VARCHAR(255) NOT NULL,
+  answer VARCHAR(255) NOT NULL,
+  quizid INTEGER NOT NULL
+);
 
-CREATE TABLE `quiz` (
-  `quizid` int(11) NOT NULL,
-  `quizname` varchar(20) NOT NULL,
-  `date_created` timestamp NOT NULL DEFAULT current_timestamp(),
-  `staffid` varchar(30) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+-- Insert questions with explicit ids (we'll set nextval later)
+INSERT INTO questions (question_id, qs, op1, op2, op3, answer, quizid) VALUES
+(15, 'Which of the following usually observe each activity on the internet of the victim, gather all information in the background, and send it to someone else?', 'Malware', 'Spyware', 'Adware', 'All of the above', 29),
+(16, 'Which one of the following is a type of antivirus program?', 'Quick heal', 'Mcafee', 'Kaspersky', 'All of the above', 29),
+(17, 'Which one of the following usually used in the process of Wi-Fi-hacking?', 'Wireshark', 'Norton', 'Nmap', 'Aircrack-ng', 29),
+(18, 'Which of these is a standard interface for serial data transmission?', 'ASCII', 'Centronics', '2', 'RS232C', 29),
+(19, 'Which type of topology is best suited for large businesses which must carefully control and coordinate the operation of distributed branch outlets?', 'Ring', 'Local area', 'Hierarchical', 'Star', 29),
+(20, 'Parity bits are used for which of the following purposes?', 'Encryption of data', 'To transmit faster', 'To identify the user', 'To detect errors', 29),
+(21, 'Which sports person is nick named Dennis the Menace?', 'B John McEnroe', 'Sampras', 'C Jim Courier', 'A Pete Sampras', 31);
 
---
--- Dumping data for table `quiz`
---
+-- Table: score
+CREATE TABLE score (
+  slno SERIAL PRIMARY KEY,
+  score INTEGER NOT NULL,
+  quizid INTEGER NOT NULL,
+  usn VARCHAR(30) NOT NULL,
+  totalscore INTEGER NOT NULL,
+  remark VARCHAR(20) NOT NULL
+);
 
-INSERT INTO `quiz` (`quizid`, `quizname`, `date_created`, `staffid`) VALUES
-(29, 'cyber security', '2024-12-27 17:43:34', '101'),
-
-
---
--- Triggers `quiz`
---
-DELIMITER $$
-CREATE TRIGGER `ondeleteqs` AFTER DELETE ON `quiz` FOR EACH ROW delete from questions where questions.quizid=old.quizid
-$$
-DELIMITER ;
-
--- --------------------------------------------------------
-
-DELIMITER $$
-
-CREATE TRIGGER assert_unique_quizname
-BEFORE INSERT ON quiz
-FOR EACH ROW
-BEGIN
-    IF (SELECT COUNT(*) FROM quiz WHERE quizname = NEW.quizname) > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Assertion failed: Quiz name must be unique.';
-    END IF;
-END$$
-
-DELIMITER ;
-
---
--- Table structure for table `score`
---
-
-CREATE TABLE `score` (
-  `slno` int(11) NOT NULL,
-  `score` int(11) NOT NULL,
-  `quizid` int(11) NOT NULL,
-  `usn` varchar(30) NOT NULL,
-  `totalscore` int(11) NOT NULL,
-  `remark` varchar(20) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `score`
---
-
-INSERT INTO `score` (`slno`, `score`, `quizid`, `usn`, `totalscore`, `remark`) VALUES
+INSERT INTO score (slno, score, quizid, usn, totalscore, remark) VALUES
 (34, 1, 29, '4sf22cs54', 6, 'good'),
 (35, 1, 31, '4sf22cs54', 1, 'good'),
 (36, 0, 29, '4SC22CS022', 6, 'bad'),
 (37, 4, 29, '4SC22CS022', 6, 'bad'),
 (38, 5, 29, '4SC22CS022', 6, 'good');
 
---
--- Triggers `score`
---
-DELIMITER $$
-CREATE TRIGGER `remarks` BEFORE INSERT ON `score` FOR EACH ROW set NEW.remark = if(NEW.score < 5, 'bad', 'good')
-$$
-DELIMITER ;
+-- Foreign key constraints
+ALTER TABLE questions
+  ADD CONSTRAINT questions_quizid_fk FOREIGN KEY (quizid) REFERENCES quiz (quizid) ON DELETE CASCADE;
 
--- --------------------------------------------------------
+ALTER TABLE score
+  ADD CONSTRAINT score_quizid_fk FOREIGN KEY (quizid) REFERENCES quiz (quizid) ON DELETE CASCADE,
+  ADD CONSTRAINT score_usn_fk FOREIGN KEY (usn) REFERENCES student (usn);
 
---
--- Table structure for table `staff`
---
+-- ------------------------------------------------------------------
+-- Triggers and trigger functions (converted to PostgreSQL PL/pgSQL)
+-- ------------------------------------------------------------------
 
-CREATE TABLE `staff` (
-  `staffid` varchar(10) NOT NULL,
-  `name` varchar(20) NOT NULL,
-  `mail` varchar(30) NOT NULL,
-  `phno` varchar(10) NOT NULL,
-  `gender` varchar(1) NOT NULL,
-  `DOB` varchar(10) NOT NULL,
-  `pw` varchar(200) NOT NULL,
-  `dept` varchar(3) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+-- Trigger function: delete questions when quiz deleted (ondeleteqs)
+CREATE OR REPLACE FUNCTION fn_delete_questions_on_quiz_delete()
+RETURNS trigger AS $$
+BEGIN
+  DELETE FROM questions WHERE questions.quizid = OLD.quizid;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
 
---
--- Dumping data for table `staff`
---
+CREATE TRIGGER ondeleteqs
+AFTER DELETE ON quiz
+FOR EACH ROW
+EXECUTE FUNCTION fn_delete_questions_on_quiz_delete();
 
-INSERT INTO `staff` (`staffid`, `name`, `mail`, `phno`, `gender`, `DOB`, `pw`, `dept`) VALUES
-('101', 'Teacher', 'staff@sahyadri.com', '9878987878', 'M', '1992-01-06', 'password', 'ISE'),
+-- Trigger function: assert_unique_quizname (before insert)
+CREATE OR REPLACE FUNCTION fn_assert_unique_quizname()
+RETURNS trigger AS $$
+BEGIN
+  IF (SELECT COUNT(*) FROM quiz WHERE quizname = NEW.quizname) > 0 THEN
+    RAISE EXCEPTION 'Assertion failed: Quiz name must be unique.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
+CREATE TRIGGER assert_unique_quizname
+BEFORE INSERT ON quiz
+FOR EACH ROW
+EXECUTE FUNCTION fn_assert_unique_quizname();
 
--- --------------------------------------------------------
+-- Trigger function: remarks (before insert on score) to set remark column
+CREATE OR REPLACE FUNCTION fn_set_remark_on_score_insert()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.score < 5 THEN
+    NEW.remark := 'bad';
+  ELSE
+    NEW.remark := 'good';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
---
--- Table structure for table `student`
---
+CREATE TRIGGER remarks
+BEFORE INSERT ON score
+FOR EACH ROW
+EXECUTE FUNCTION fn_set_remark_on_score_insert();
 
-CREATE TABLE `student` (
-  `usn` varchar(10) NOT NULL,
-  `name` varchar(20) NOT NULL,
-  `mail` varchar(30) NOT NULL,
-  `phno` varchar(10) NOT NULL,
-  `gender` varchar(1) NOT NULL,
-  `DOB` varchar(10) NOT NULL,
-  `pw` varchar(200) NOT NULL,
-  `dept` varchar(3) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+-- ------------------------------------------------------------------
+-- Leaderboard: convert procedure to function returning setof rows
+-- ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION leaderboard()
+RETURNS TABLE (
+  quizname VARCHAR,
+  score INTEGER,
+  totalscore INTEGER,
+  usn VARCHAR,
+  name VARCHAR
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT q.quizname, s.score, s.totalscore, st.usn, st.name
+  FROM score s
+  JOIN student st ON s.usn = st.usn
+  JOIN quiz q ON q.quizid = s.quizid
+  ORDER BY s.score DESC;
+END;
+$$ LANGUAGE plpgsql;
 
---
--- Dumping data for table `student`
---
+-- ------------------------------------------------------------------
+-- Fix sequences for SERIAL columns after explicit inserts
+-- ------------------------------------------------------------------
 
-INSERT INTO `student` (`usn`, `name`, `mail`, `phno`, `gender`, `DOB`, `pw`, `dept`) VALUES
-('4SC22CS022', 'Student', 'student@sahyadri.com', '8786788909', 'M', '2001-01-08', 'student@123', 'cSE'),
+-- Set quiz sequence to max(quizid)+1
+DO $$
+DECLARE
+  maxq INT;
+BEGIN
+  SELECT COALESCE(MAX(quizid), 0) INTO maxq FROM quiz;
+  IF maxq IS NULL THEN
+    maxq := 1;
+  END IF;
+  EXECUTE format('ALTER SEQUENCE quiz_quizid_seq RESTART WITH %s;', maxq + 1);
+EXCEPTION WHEN undefined_table THEN
+  -- if sequence name is different (older PG versions) attempt to create sequence
+  RAISE NOTICE 'Sequence quiz_quizid_seq not found; skipping restart.';
+END;
+$$;
 
+-- Set questions sequence to max(question_id)+1
+DO $$
+DECLARE
+  maxq INT;
+BEGIN
+  SELECT COALESCE(MAX(question_id), 0) INTO maxq FROM questions;
+  IF maxq IS NULL THEN
+    maxq := 1;
+  END IF;
+  EXECUTE format('ALTER SEQUENCE questions_question_id_seq RESTART WITH %s;', maxq + 1);
+EXCEPTION WHEN undefined_table THEN
+  RAISE NOTICE 'Sequence questions_question_id_seq not found; skipping restart.';
+END;
+$$;
 
---
--- Indexes for dumped tables
+-- Set score sequence to max(slno)+1
+DO $$
+DECLARE
+  maxs INT;
+BEGIN
+  SELECT COALESCE(MAX(slno), 0) INTO maxs FROM score;
+  IF maxs IS NULL THEN
+    maxs := 1;
+  END IF;
+  EXECUTE format('ALTER SEQUENCE score_slno_seq RESTART WITH %s;', maxs + 1);
+EXCEPTION WHEN undefined_table THEN
+  RAISE NOTICE 'Sequence score_slno_seq not found; skipping restart.';
+END;
+$$;
 
-
---
-
---
--- Indexes for table `dept`
---
-ALTER TABLE `dept`
-  ADD PRIMARY KEY (`dept_id`);
-
---
--- Indexes for table `questions`
---
-ALTER TABLE `questions`
-  ADD PRIMARY KEY (`question_id`),
-  ADD UNIQUE KEY `qs` (`qs`),
-  ADD KEY `quizid` (`quizid`),
-  ADD KEY `quizid_2` (`quizid`),
-  ADD KEY `quizid_3` (`quizid`);
-
---
--- Indexes for table `quiz`
---
-ALTER TABLE `quiz`
-  ADD PRIMARY KEY (`quizid`);
-
---
--- Indexes for table `score`
---
-ALTER TABLE `score`
-  ADD PRIMARY KEY (`slno`),
-  ADD KEY `quizid` (`quizid`),
-  ADD KEY `usn` (`usn`);
-
---
--- Indexes for table `staff`
---
-ALTER TABLE `staff`
-  ADD PRIMARY KEY (`staffid`),
-  ADD UNIQUE KEY `mail` (`mail`,`phno`),
-  ADD UNIQUE KEY `staffid` (`staffid`),
-  ADD KEY `mail_2` (`mail`);
-
---
--- Indexes for table `student`
---
-ALTER TABLE `student`
-  ADD PRIMARY KEY (`usn`),
-  ADD UNIQUE KEY `mail` (`mail`),
-  ADD UNIQUE KEY `phno` (`phno`),
-  ADD UNIQUE KEY `usn` (`usn`),
-  ADD KEY `dept` (`dept`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `questions`
---
-ALTER TABLE `questions`
-  MODIFY `question_id` int(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
-
---
--- AUTO_INCREMENT for table `quiz`
---
-ALTER TABLE `quiz`
-  MODIFY `quizid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
-
---
--- AUTO_INCREMENT for table `score`
---
-ALTER TABLE `score`
-  MODIFY `slno` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `score`
---
-ALTER TABLE `score`
-  ADD CONSTRAINT `score_ibfk_1` FOREIGN KEY (`quizid`) REFERENCES `quiz` (`quizid`) ON DELETE CASCADE,
-  ADD CONSTRAINT `score_ibfk_3` FOREIGN KEY (`usn`) REFERENCES `student` (`usn`);
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
