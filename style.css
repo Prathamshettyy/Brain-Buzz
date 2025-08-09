@@ -1,0 +1,295 @@
+/*
+ * style.css
+ * New Dark UI for Brain-Buzz
+ */
+
+/* --- Google Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- CSS Variables (Dark Theme Palette) --- */
+:root {
+    --bg-color: #121212;
+    --surface-color: #1E1E1E;
+    --primary-color: #38bdf8; /* Light Blue */
+    --primary-hover: #0ea5e9;
+
+    --text-primary: #EAEAEA;
+    --text-secondary: #A0A0A0;
+    --border-color: #333333;
+}
+.main-nav a.btn:hover {
+    color: var(--bg-color);
+}
+
+/* --- Global Resets and Base Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--primary-hover);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --- Main Layout Container --- */
+.main-content {
+    flex: 1;
+    padding: 2rem 1rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+
+/* --- Header & Footer --- */
+.site-header, .site-footer {
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem;
+}
+
+.site-header .container, .site-footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.site-header .logo a {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.main-nav a {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.main-nav a.active, .main-nav a:hover {
+    color: var(--primary-color);
+}
+
+.site-footer {
+    border-bottom: none;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+/* Find and replace this rule in your style.css */
+
+.btn:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color); /* FIX: Changes text to the dark background color on hover */
+    transform: translateY(-2px);
+}
+
+/* Modifier for Solid Buttons (for primary actions) */
+.btn.btn-solid {
+    background-color: var(--primary-color);
+    color: #121212;
+    border-color: var(--primary-color);
+}
+
+.btn.btn-solid:hover {
+    background-color: var(--primary-hover);
+    color: #121212;
+}
+
+.btn-secondary {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.btn-secondary:hover {
+    background-color: #444;
+    color: var(--text-primary);
+}
+
+
+/* --- Cards (for content sections) --- */
+.card {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.card-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* --- Forms --- */
+.form-container {
+    max-width: 450px;
+    margin: 2rem auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* --- Tables --- */
+.table-container {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+.table th, .table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+    background-color: #2a2a2a;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.table tbody tr:hover {
+    background-color: #252525;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .site-header .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+/* --- Style for Forgot Password Link --- */
+.form-footer-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+.form-footer-link a {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+.form-footer-link a:hover {
+    text-decoration: underline;
+}
+/* --- New Input Field Styles (White Background) --- */
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    background-color: #828181; /* White background */
+    color: #0b0b0b;            /* Black text */
+    border: 1px solid #cccccc; /* A light grey border */
+}
+
+/* Change placeholder text color to a darker grey */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #666666;
+    opacity: 1; /* Override Bootstrap's default opacity */
+}
+
+/* Ensure the focus style remains consistent */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color); /* Keeps the blue focus border */
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+/* Make the text in the 'Correct Answer' field green for emphasis */
+#ans, #answer {
+    color: #166534; /* Dark Green */
+    font-weight: 500;
+}

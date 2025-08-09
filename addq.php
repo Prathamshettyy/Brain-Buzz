@@ -1,326 +1,87 @@
-<html>
-
-<?php require ("header.php");?>
-
 <?php
-session_start();
+// Start session and check if the user is logged in as a staff member
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (!isset($_SESSION['staffid'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include database connection
 require_once 'sql.php';
-                $conn = mysqli_connect($host, $user, $ps, $project);if (!$conn) {
-    echo "<script>alert(\"Database error retry after some time !\")</script>";
-} else {
-    $staffid = $_SESSION["staffid"];
-    $sql = "select * from staff where staffid='{$staffid}'";
-    $res =   mysqli_query($conn, $sql);
-    if ($res == true) {
-        global $dbstaffid, $dbpw;
-        while ($row = mysqli_fetch_array($res)) {
-            $dbstaffid = $row['staffid'];
-            $dbname = $row['name'];
-			$dbmail = $row['mail'];
-            $dbphno = $row['phno'];
-            $dbgender = $row['gender'];
-            $dbdob = $row['DOB'];
-            $dbdept = $row['dept'];
-        }
-    }
-    $qid=$_GET["qid"];
-    if (isset($_POST['submit'])) {
-        $qs = $_POST["qs"];
-        $op1 = $_POST["op1"];
-        $op2 = $_POST["op2"];
-        $op3 = $_POST["op3"];
-        $ans = $_POST["ans"];
-        $sql = "insert into questions(qs,op1,op2,op3,answer,quizid) values('$qs','$op1','$op2','$op3','$ans','$qid');";
-        $res =   mysqli_query($conn, $sql);
-        if ($res == true) {
-            echo '<script>history.pushState({}, "", "");</script>';
-        } elseif ($res != true) {
-            echo '<script>alert("Question already exsits");</script>';
-        }
-    }
-    if (isset($_POST['submit1'])) {
-        $qs = $_POST["qs"];
-        $op1 = $_POST["op1"];
-        $op2 = $_POST["op2"];
-        $op3 = $_POST["op3"];
-        $ans = $_POST["ans"];
-        $sql = "insert into questions(qs,op1,op2,op3,answer,quizid) values('$qs','$op1','$op2','$op3','$ans','$qid');";
-        $res =   mysqli_query($conn, $sql);
-        if ($res == true) {
-            header("Location: homestaff.php");
-        } elseif ($res != true) {
-            echo '<script>alert("Question already exsits");</script>';
+$conn = mysqli_connect($host, $user, $ps, $project);
+if (!$conn) {
+    $db_error = "Could not connect to the database.";
+}
+
+// --- Handle Form Submission for Creating a New Quiz ---
+if (isset($_POST['create_quiz'])) {
+    if (isset($conn)) {
+        $quiz_name = mysqli_real_escape_string($conn, $_POST['quiz_name']);
+        
+        // This is the staff member's ID who is creating the quiz
+        $staff_id = $_SESSION['staffid']; 
+        
+        // SQL to insert the new quiz
+        $sql = "INSERT INTO quiz (quizname, staffid) VALUES ('$quiz_name', '$staff_id')";
+        
+        if (mysqli_query($conn, $sql)) {
+            // Get the ID of the quiz we just created
+            $new_quiz_id = mysqli_insert_id($conn);
+            
+            // Redirect to the add questions page for the new quiz
+            header("Location: addqs.php?q=" . $new_quiz_id);
+            exit();
+        } else {
+            // Handle potential errors, like a duplicate quiz name
+            $form_error = "Error: A quiz with this name might already exist.";
         }
     }
 }
+
+// Include the header AFTER all PHP logic
+include_once 'header.php';
 ?>
 
-<body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
-
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-				
-				 <li class="nav-item">
-              <a href="homestaff.php" class="nav-link">
-                <span class="text-success nav-link-inner--text font-weight-bold"
-                  ><i class="text-success fad fa-home"></i> DashBoard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="quizlist.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-poll"></i> QuizList</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="staffleaderboard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-award"></i> LeaderBoard</span
-                >
-              </a>
-            </li>
-			
-			
-			 <li class="nav-item">
-              <a href="staffprofile.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fas fa-user-circle"></i> <?php echo $dbname ?></span
-                >
-              </a>
-            </li>
-		  
-		   <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-danger fas fa-power-off"></i> Logout</span
-                >
-              </a>
-            </li>
-		  
-
-          
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
-
-	
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2><i class="fa fa-plus-circle"></i> Create a New Quiz</h2>
+        <a href="quizlist.php" class="btn"><i class="fa fa-arrow-left"></i> Back to Quiz List</a>
     </div>
 
-		
-<div class="container-fluid"> 
-      
-<div class="row">
-            <div class="col-sm-12 mb-3">  
-              <div class="card card-body bg-gradient-default text-white mt-3">
-			  
-			   <div class="col-12 mx-auto text-center">
-            <span class="badge badge-warning badge-pill mb-3">Add questions</span>
-          </div>
-		  
-		  
-		 <section id="ans">			
-                <form  method="post">
-                 <div id="QS">
-						
-				<div class="form-group row">
-                    <label for="qs" class="col-md-2 col-form-label"
-                      ><h6 class="text-white font-weight-bold">Question</h6>
-                    </label>
-                    <div class="col-md-10">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="quizid"
-                        name="qs"
-                        placeholder="Enter Question"
-						required"
-                      />
-                    </div>
+    <div class="form-container" style="max-width: 600px;">
+        <div class="card">
+            <div class="card-header">
+                <h3>Quiz Details</h3>
+                <p>Enter a name for your new quiz to get started.</p>
+            </div>
+            
+            <?php if (!empty($form_error)): ?>
+                <div class="message error">
+                    <?php echo $form_error; ?>
                 </div>
-				
-				<div class="form-group row">
-                    <label for="op1" class="col-md-2 col-form-label"
-                      ><h6 class="text-white font-weight-bold">Option 1</h6>
-                    </label>
-                    <div class="col-md-10">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="quizid"
-                        name="op1"
-                        placeholder="Option 1"
-						required"
-                      />
-                    </div>
-                </div>
-				
-				<div class="form-group row">
-                    <label for="op2" class="col-md-2 col-form-label"
-                      ><h6 class="text-white font-weight-bold">Option 2</h6>
-                    </label>
-                    <div class="col-md-10">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="quizid"
-                        name="op2"
-                        placeholder="Option 2"
-						required"
-                      />
-                    </div>
-                </div>
-				
-				<div class="form-group row">
-                    <label for="op3" class="col-md-2 col-form-label"
-                      ><h6 class="text-white font-weight-bold">Option 3</h6>
-                    </label>
-                    <div class="col-md-10">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="quizid"
-                        name="op3"
-                        placeholder="Option 3"
-						required"
-                      />
-                    </div>
-                </div>
-				
-				<div class="form-group row">
-                    <label for="ans" class="col-md-2 col-form-label"
-                      ><h6 class="text-white font-weight-bold">Option 4</h6>
-                    </label>
-                    <div class="col-md-10">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="quizid"
-                        name="ans"
-                        placeholder="Option 4"
-						required"
-                      />
-                    </div>
-                </div>
-				
-			</div>
-			
-					<div class="form-group row">
-                    <div class="offset-md-2 col-md-2">
-                      <button
-                        type="submit"
-                        class="btn btn-info text-dark"
-						name="submit" id="submit" value="Add 1 More Question"
-                      >
-                        Add 1 More Question
-                      </button>
-                    </div>
-					
-					 <div class="offset-md-7 col-md-">
-                      <button
-                        type="submit"
-                        class="btn btn-success text-white"
-						name="submit1" id="submit1" value="Done"
-                      >
-                        Submit
-                      </button>
-                    </div>
-					</div>
+            <?php endif; ?>
 
-	
-			</form>
-					
-          </section>
-
-
-                  </div>
+            <form method="POST" action="addq.php" autocomplete="off">
+                <div class="form-group">
+                    <label for="quiz_name">Quiz Name</label>
+                    <input type="text" id="quiz_name" name="quiz_name" placeholder="e.g., 'General Knowledge' or 'PHP Basics'" required>
                 </div>
-              </div>		
-		
- </div>
- </section>
- 
-    <?php require("footer.php");?>
+                <button type="submit" name="create_quiz" class="btn btn-solid" style="width:100%;">Create Quiz and Add Questions</button>
+            </form>
+        </div>
+    </div>
+</div>
 
-</body>
+<style>
+    /* These styles are for the success/error messages */
+    .message { padding: 1rem; border-radius: 6px; text-align: center; margin-bottom: 1.5rem; font-weight: 500; }
+    .message.success { background-color: #166534; color: #dcfce7; }
+    .message.error { background-color: #991b1b; color: #fee2e2; }
+</style>
 
-</html>
+<?php
+if (isset($conn)) { mysqli_close($conn); }
+include_once 'footer.php';
+?>

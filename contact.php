@@ -1,361 +1,111 @@
 <?php
+// Start session and handle form logic at the top
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Include packages and files for PHPMailer and SMTP protocol
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
+// Include PHPMailer files
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 
-// Initialize PHP mailer, configure to use SMTP protocol and add credentials
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-$mail = new PHPMailer();
-$mail->IsSMTP();
-$mail->Mailer = "smtp";
-
-$mail->SMTPDebug  = 0;
-$mail->SMTPAuth   = TRUE;
-$mail->SMTPSecure = "ssl";
-$mail->Port       = 465;
-$mail->Host       = "smtp.gmail.com";
-$mail->Username   = "eclassroom1999@gmail.com";
-$mail->Password   = "dmcgocrdifnyjmbw";
-
-
-$success = "";
-$error = "";
-$name = $message = $email = "";
-$errors = array('name' => '', 'email' => '', 'message' => '');
-$mymail = 'prathamshetty329@gmail.com';
-$myname = 'Brain Buzz';
-
+$feedback = null;
+$name = $email = $message = ''; // Initialize variables
 
 if (isset($_POST["submit"])) {
-    if (empty(trim($_POST["name"]))) {
-        $errors['name'] = "Your name is required";
+    $name = trim($_POST["name"]);
+    $email = trim($_POST["email"]);
+    $message = trim($_POST["message"]);
+    
+    if (empty($name) || empty($email) || empty($message)) {
+        $feedback = ['message' => 'All fields are required.', 'type' => 'error'];
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $feedback = ['message' => 'Please enter a valid email address.', 'type' => 'error'];
     } else {
-        $name = SanitizeString($_POST["name"]);
-        if (!preg_match('/^[a-zA-Z\s]{6,50}$/', $name)) {
-            $errors['name'] = "Only letters and spaces allowed";
-        }
-    }
-
-    if (empty(trim($_POST["email"]))) {
-        $errors["email"] = "Your email is required";
-    } else {
-        $email = SanitizeString($_POST["email"]);
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors["email"] = "Pls give a proper email address";
-        }
-    }
-
-    if (empty(trim($_POST["message"]))) {
-        $errors["message"] = "Please type your message";
-    } else {
-        $message = SanitizeString($_POST["message"]);
-        if (!preg_match("/^[a-zA-Z\d\s]+$/", $message)) {
-            $errors["message"] = "Only letters, spaces and maybe numbers allowed";
-        }
-    }
-
-    if (array_filter($errors)) {
-    } else {
+        $mail = new PHPMailer(true);
         try {
+            // --- YOUR NEW EMAIL SERVER DETAILS ---
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'randomshithere99@gmail.com'; 
+            $mail->Password   = 'dxkp ltvq orpv dltj'; // Your new App Password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = 465;
 
-            $mail->setFrom('eclassroom1999@gmail', 'Quiz Master');
+            // --- RECIPIENTS ---
+            $mail->setFrom($email, htmlspecialchars($name));
+            $mail->addAddress('prathamshetty329@gmail.com', 'Brain Buzz Admin'); 
 
-            $mail->addAddress($mymail, $myname);
-
-            $mail->Subject = 'Online Quiz Management System - Contact Form';
-
-            $mail->Body = $message;
-
-            // send mail
+            // --- CONTENT ---
+            $mail->isHTML(true);
+            $mail->Subject = 'New Contact Form Message from ' . htmlspecialchars($name);
+            $mail->Body    = "<b>Name:</b> " . htmlspecialchars($name) . "<br>" .
+                           "<b>Email:</b> " . htmlspecialchars($email) . "<br><br>" .
+                           "<b>Message:</b><br>" . nl2br(htmlspecialchars($message));
 
             $mail->send();
-
-            // empty users input
-
-            $name = $message = $email = "";
-
-            $success = "Message sent successfully";
+            $feedback = ['message' => 'Your message has been sent successfully!', 'type' => 'success'];
+            $name = $email = $message = '';
         } catch (Exception $e) {
-
-            // echo $e->errorMessage(); use for testing & debugging purposes
-            $error = "Sorry message could not send, try again";
-        } catch (Exception $e) {
-
-            // echo $e->getMessage(); use for testing & debugging purposes
-            $error = "Sorry message could not send, try again";
+            $feedback = ['message' => 'Message could not be sent. Please double-check your App Password.', 'type' => 'error'];
         }
     }
 }
 
-function SanitizeString($var)
-{
-    $var = strip_tags($var);
-    $var = htmlentities($var);
-    return stripslashes($var);
-}
-
+include_once 'header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-<?php require ("header.php");?>
-
-
-    <style>
-        .error {
-            color: white;
-            background-color: crimson;
-            border-radius: 7px;
-            text-align: center;
-        }
-
-        .success {
-            background-color: darkgreen;
-            color: white;
-            border-radius: 7px;
-            text-align: center;
-        }
-    </style>
-
-
-
-  <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
-
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-		   <li class="nav-item">
-              <a href="contact.php" class="nav-link">
-                <span class="text-success nav-link-inner--text"
-                  ><i class="text-success fas fa-address-card"></i> Contact</span
-                >
-              </a>
-            </li>
-		  
-							  <li class="nav-item">
-			   <div class="dropdown show ">
-		  <a class="nav-link dropdown-toggle text-white " href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-		                  <span class="text-white nav-link-inner--text"
-                  ><i class="text-white fas fa-sign-in-alt"></i> Login</span
-                >
-		  </a>
-
-		  <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-			<a class="dropdown-item" href="loginstud.php">Student</a>
-			<a class="dropdown-item" href="login.php">Staff</a>
-		  </div>
-		</div>
-			</li>
-
-
-            <li class="nav-item">
-              <a href="signup.php" class="nav-link">
-                <span class="text-white nav-link-inner--text"
-                  ><i class="text-white fas fa-user-plus"></i> Sign Up</span
-                >
-              </a>
-            </li>
-
-          
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
-  
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+<div class="container">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2><i class="fa fa-address-card"></i> Get in Touch</h2>
+        <p style="color:var(--text-secondary);">We'd love to hear from you. Choose an option below or send us a message.</p>
     </div>
 
-<!-- ======================================================================================================================================== -->
-      <div class="container">
-        <div class="row">
-          <div class="col-md-8 mx-auto text-center">
-            <span class="badge badge-warning badge-pill mb-3">Contact</span>
-          </div>
+    <div class="contact-actions-grid">
+         <a href="tel:+919480242018" class="card-link">
+            <div class="action-card"><i class="fa fa-phone"></i><h3>Call Us</h3><p>+91 94802 42018</p></div>
+        </a>
+        <a href="https://wa.me/919480242018?text=Message%20From%20Brain-Buzz" target="_blank" class="card-link">
+            <div class="action-card"><i class="fab fa-whatsapp"></i><h3>WhatsApp</h3><p>Chat with us directly</p></div>
+        </a>
+        <a href="mailto:prathamshetty329@gmail.com" class="card-link">
+             <div class="action-card"><i class="fa fa-envelope"></i><h3>Email Us</h3><p>prathamshetty329@gmail.com</p></div>
+        </a>
+    </div>
+
+    <div class="form-container" style="max-width: 800px; margin-top: 2rem;">
+        <div class="card">
+             <div class="card-header"><h3>Or Send a Message Directly</h3></div>
+            
+            <?php if ($feedback): ?>
+                <div class="message <?php echo $feedback['type']; ?>"><?php echo $feedback['message']; ?></div>
+            <?php endif; ?>
+
+            <form action="contact.php" method="post" autocomplete="off">
+                <div class="form-group"><label for="name">Your Name</label><input type="text" id="name" name="name" required value="<?php echo htmlspecialchars($name); ?>"></div>
+                <div class="form-group"><label for="email">Your Email</label><input type="email" id="email" name="email" required value="<?php echo htmlspecialchars($email); ?>"></div>
+                <div class="form-group"><label for="message">Your Message</label><textarea id="message" name="message" rows="5" required><?php echo htmlspecialchars($message); ?></textarea></div>
+                <button type="submit" name="submit" class="btn btn-solid" style="width:100%;">Send Message</button>
+            </form>
         </div>
+    </div>
+</div>
 
-        <div class="row row-content align-text-center">
-          <div class="col-12">
-            <div class="col-12">
-              <div class="card card-body bg-dark">
-			  
-			  <div class="success"><?php echo $success ?></div>
-                <div class="error"><?php echo $error ?></div>
-				
-                <form
-                  action="contact.php"
-                  method="post"
-                >
-                  <div class="form-group row">
-                    <label for="name" class="col-md-2 col-form-label"
-                      ><h6 class="text-white">Name</h6>
-                    </label>
-                    <div class="col-md-10">
-                      <input
-                        type="text"
-                        class="form-control"
-                        required
-                        id="name"
-                        name="name"
-                        placeholder="Full Name"
-						value="<?php echo htmlspecialchars($name) ?>"
-                      />
-                    </div>
-                  </div>
+<style>
+    .contact-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    .action-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; text-align: center; transition: all 0.3s ease; height: 100%; }
+    .action-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.25); border-color: var(--primary-color); }
+    .action-card i { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 1rem; }
+    .action-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .action-card p { color: var(--text-secondary); font-size: 0.9rem; }
+    a.card-link { text-decoration: none; }
+    .message { padding: 1rem; border-radius: 6px; text-align: center; margin-bottom: 1.5rem; font-weight: 500; }
+    .message.success { background-color: #166534; color: #dcfce7; }
+    .message.error { background-color: #991b1b; color: #fee2e2; }
+</style>
 
-
-                  <div class="form-group row">
-                    <label for="emailid" class="col-md-2 col-form-label">
-                      <h6 class="text-white">Email</h6></label
-                    >
-                    <div class="col-md-10">
-                      <input
-                        type="email"
-                        class="form-control"
-                        required
-                        id="email"
-                        name="email"
-                        placeholder="abc@xyz.com"
-						value="<?php echo htmlspecialchars($email) ?>"
-                      />
-					                          <div class="error"><?php echo $errors["email"] ?></div>
-
-                    </div>
-                  </div>
-
-                  <div class="form-group row">
-                    <label for="feedback" class="col-md-2 col-form-label">
-                      <h6 class="text-white">Message</h6></label
-                    >
-                    <div class="col-md-10">
-                      <textarea
-                        class="form-control"
-                        id="message"
-                        name="message"
-                        placeholder="Your Message..."
-                        rows="5"
-						<?php echo htmlspecialchars($message) ?>
-                      ></textarea>
-					                          <div class="error"><?php echo $errors["message"] ?></div>
-
-                    </div>
-                  </div>
-
-                  <div class="form-group row">
-                    <div class="offset-md-2 col-md-2">
-                      <button
-                        type="submit"
-                        class="btn btn-danger"
-						name="submit" id="submit" value="Send"
-                      >
-                        SEND
-                      </button>
-                    </div>
-
-                    <div class="offset-md-3 text-justify-content-end">
-                      <div class="btn-group" role="group">
-                        <a
-                          role="button"
-                          class="btn btn-info"
-                          href="tel:+919480242018"
-                          ><i class="fa fa-phone"></i> Call</a
-                        >
-                        <a role="button" class="btn btn-success" target="_blank" href="http://wa.me/919480242018?text=Message%20From%20Quiz%20Master." 
-                          ><i class="fa fa-whatsapp"></i> Whatsapp</a
-                        >
-                        <a
-                          role="button"
-                          class="btn btn-primary"
-                          href="mailto:prathamshetty329@gmail"
-                          ><i class="fa fa-envelope-o"></i> Email</a
-                        >
-                      </div>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-</section>
-
-	    <?php require("footer.php");?>
-
-</body>
-
-</html>
+<?php include_once 'footer.php'; ?>

@@ -1,231 +1,100 @@
-<html>
-
-
-<?php require ("header.php");?>
-
 <?php
-session_start();
+// Start session and check if the user is logged in as a staff member
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Redirect to login if not logged in or not staff
+if (!isset($_SESSION['staffid'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include database connection
 require_once 'sql.php';
-                $conn = mysqli_connect($host, $user, $ps, $project);if (!$conn) {
-    echo "<script>alert(\"Database error retry after some time !\")</script>";
-} else {
-    $staffid = $_SESSION["staffid"];
-    $sql = "select * from staff where staffid='{$staffid}'";
-    $res =   mysqli_query($conn, $sql);
-    if ($res == true) {
-        global $dbstaffid, $dbpw;
-        while ($row = mysqli_fetch_array($res)) {
-            $dbstaffid = $row['staffid'];
-            $dbname = $row['name'];
-			$dbmail = $row['mail'];
-            $dbphno = $row['phno'];
-            $dbgender = $row['gender'];
-            $dbdob = $row['DOB'];
-            $dbdept = $row['dept'];
+$conn = mysqli_connect($host, $user, $ps, $project);
+if (!$conn) {
+    $db_error = "Could not connect to the database. Please try again later.";
+}
+
+// --- Handle Delete Request ---
+if (isset($_POST['delete_quiz']) && isset($_POST['quizid_to_delete'])) {
+    if (isset($conn)) {
+        $quizid_to_delete = mysqli_real_escape_string($conn, $_POST['quizid_to_delete']);
+        // Note: For a real-world app, you should also delete related questions and scores (cascade delete).
+        $delete_sql = "DELETE FROM quiz WHERE quizid = '{$quizid_to_delete}'";
+        if (!mysqli_query($conn, $delete_sql)) {
+            $delete_error = "Error deleting quiz. It might have associated scores or questions that need to be removed first.";
         }
     }
 }
+
+// Include the header AFTER all PHP logic
+include_once 'header.php';
 ?>
- <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
 
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-				
-				 <li class="nav-item">
-              <a href="homestaff.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-home"></i> DashBoard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="quizlist.php" class="nav-link">
-                <span class="text-success nav-link-inner--text font-weight-bold"
-                  ><i class="text-success fad fa-poll"></i> QuizList</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="staffleaderboard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-award"></i> LeaderBoard</span
-                >
-              </a>
-            </li>
-			
-			
-			 <li class="nav-item">
-              <a href="staffprofile.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fas fa-user-circle"></i> <?php echo $dbname ?></span
-                >
-              </a>
-            </li>
-		  
-		   <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-danger fas fa-power-off"></i> Logout</span
-                >
-              </a>
-            </li>
-		  
-
-          
-          </ul>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2><i class="fa fa-list-alt"></i> Manage Quizzes</h2>
+        <a href="addq.php" class="btn btn-solid"><i class="fa fa-plus"></i> Create New Quiz</a>
+    </div>
+    
+    <?php if(isset($delete_error)): ?>
+        <div class="card" style="background-color: #991b1b; color: #fee2e2; padding: 1rem; margin-bottom: 1rem;">
+            <?php echo $delete_error; ?>
         </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
+    <?php endif; ?>
 
-	
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+    <div class="card">
+        <div class="card-header">
+            <p>A list of all quizzes currently in the system.</p>
+        </div>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Quiz ID</th>
+                        <th>Quiz Title</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if (isset($conn)) {
+                        $sql = "SELECT * FROM quiz ORDER BY quizid DESC";
+                        $res = mysqli_query($conn, $sql);
+
+                        if (mysqli_num_rows($res) > 0) {
+                            while ($row = mysqli_fetch_assoc($res)) {
+                                $quiz_id = htmlspecialchars($row['quizid']);
+                                $quiz_name = htmlspecialchars($row['quizname']);
+                                
+                                echo "<tr>
+                                        <td>{$quiz_id}</td>
+                                        <td>{$quiz_name}</td>
+                                        <td style='text-align: right;'>
+                                            <a href='addqs.php?q={$quiz_id}' class='btn' style='margin-right: 0.5rem;'>Add/View Q's</a>
+                                            <form method='POST' action='quizlist.php' style='display:inline;' onsubmit='return confirm(\"Are you sure you want to delete this quiz? This action cannot be undone.\");'>
+                                                <input type='hidden' name='quizid_to_delete' value='{$quiz_id}'>
+                                                <button type='submit' name='delete_quiz' class='btn' style='background-color:#991b1b; border-color:#991b1b; color:#fee2e2;'>Delete</button>
+                                            </form>
+                                        </td>
+                                      </tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='3' style='text-align:center; color:var(--text-secondary);'>No quizzes have been created yet.</td></tr>";
+                        }
+                        mysqli_close($conn);
+                    } else {
+                        echo "<tr><td colspan='3' style='text-align:center; color:#f87171;'>{$db_error}</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
     </div>
+</div>
 
-
-<div class="container"> 
-      
-
-<div class="row">
-            <div class="col-sm-12 mb-3">  
-              <div class="card card-body bg-gradient-white text-white mt-3">
-			   <div class="col-12 mx-auto text-center">
-            <span class="badge badge-warning badge-pill mb-3">Quiz List</span>
-          </div>
-		  
-		  
-		      <table id="tabledata" class=" table table-striped table-hover table-bordered  text-center ">
-
-            <thead class="font-weight-bold">
-                      <tr >
-
-                <td >Quiz ID</td>
-                <td> Quiz Title </td>
-                <td> Created On </td>
-                <td>  View </td>
-
-				<td> Delete </td>
-				        </tr>
-
-            </thead>
-
-		<tbody >
-		
-		
-		  				        <?php
-
-
-  $sql ="select * from quiz where staffid='{$staffid}'";
-            $res=mysqli_query($conn,$sql);
-       
-while ($row = mysqli_fetch_array($res)) {                
-             
-			$id=$row['quizid'];
-			$name=$row['quizname'];
-			$date=$row['date_created'];
-			
-        ?>
-		
-			     <tr class="text-center">
-              
-                <td data-label="Quiz ID"> <?php echo $id ?> </td>
-                <td data-label="Quiz Title"> <?php echo $name  ?> </td>
-                <td data-label="Created On"> <?php echo $date  ?> </td>
-                
-        <td data-label="Profile"> <button class="btn btn-info btn-sm" > <a href="viewq.php?qid=<?php echo $id ?>" class="nav-link text-white"> View </a> </button> </td>
-	
-       <td data-label="delete"> <button class="btn btn-sm btn-danger" > <a href="delete.php?id=<?php echo $id ?>"  class=" nav-link text-white" data-toggle="tooltip">Delete</a> </button> </td>
-
-            </tr>
-
-							<?php
-					
-					
-					}
-				?>
-			</tbody>
-			
-    </table>
-     
-             </div>
-                </div>
-              </div>    	
-    </div>
-</section>
-
-
-    <?php require("footer.php");?>
-
-</body>
-
-</html>
+<?php
+include_once 'footer.php';
+?>

@@ -1,203 +1,109 @@
-<html>
-
-
-<?php require ("header.php");?>
 <?php
-session_start();
+// Start session and check if the user is logged in as a student
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Redirect to login if not logged in
+if (!isset($_SESSION['usn'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include the database connection and header
 require_once 'sql.php';
-                $conn = mysqli_connect($host, $user, $ps, $project);if (!$conn) {
-    echo "<script>alert(\"Database error retry after some time !\")</script>";
-} else {
-    $usn = $_SESSION["usn"];
-    $sql = "select * from student where usn='{$usn}'";
-    $res =   mysqli_query($conn, $sql);
-    if ($res == true) {
-        global $dbusn, $dbpw;
-        while ($row = mysqli_fetch_array($res)) {
-            $dbusn = $row['usn'];
-            $dbname = $row['name'];
-			$dbmail = $row['mail'];
-            $dbphno = $row['phno'];
-            $dbgender = $row['gender'];
-            $dbdob = $row['DOB'];
-            $dbdept = $row['dept'];
-        }
-    }
+include_once 'header.php';
+
+// Establish database connection
+$conn = mysqli_connect($host, $user, $ps, $project);
+if (!$conn) {
+    $db_error = "Could not connect to the database. Please try again later.";
 }
 ?>
 
-
-  <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
-
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-				
-				 <li class="nav-item">
-              <a href="homestud.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-home"></i> DashBoard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="studscorecard.php" class="nav-link">
-                <span class="text-success nav-link-inner--text font-weight-bold"
-                  ><i class="text-success fad fa-poll"></i> ScoreCard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="studleaderboard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-award"></i> LeaderBoard</span
-                >
-              </a>
-            </li>
-			
-			
-			 <li class="nav-item">
-              <a href="studprofile.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fas fa-user-circle"></i> <?php echo $dbname ?></span
-                >
-              </a>
-            </li>
-		  
-		   <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-danger fas fa-power-off"></i> Logout</span
-                >
-              </a>
-            </li>
-		  
-
-          
-          </ul>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fa fa-poll"></i> Your Scorecard</h2>
+            <p>Here are the results of the quizzes you have completed.</p>
         </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
-		
-		
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Quiz Title</th>
+                        <th style="text-align: center;">Score</th>
+                        <th style="text-align: center;">Total Questions</th>
+                        <th style="text-align: center;">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if (isset($conn)) {
+                        $usn = $_SESSION['usn'];
+                        // This query gets the data we need
+                        $sql = "SELECT q.quizname, sc.score, sc.totalscore 
+                                FROM score sc 
+                                JOIN quiz q ON sc.quizid = q.quizid 
+                                WHERE sc.usn = '{$usn}'";
+                        
+                        $res = mysqli_query($conn, $sql);
+
+                        if (mysqli_num_rows($res) > 0) {
+                            while ($row = mysqli_fetch_assoc($res)) {
+                                $quizname = htmlspecialchars($row["quizname"]);
+                                $score = (int) $row["score"]; // Cast to integer
+                                $totalscore = (int) $row["totalscore"]; // Cast to integer
+
+                                // **FIX:** Calculate the remark here to ensure it's always correct.
+                                // A score of 50% or higher is a "Pass".
+                                if ($totalscore > 0) {
+                                    $remark = (($score / $totalscore) >= 0.5) ? 'Pass' : 'Fail';
+                                } else {
+                                    $remark = 'Fail';
+                                }
+                                
+                                $remark_class = ($remark === 'Pass') ? 'remark-pass' : 'remark-fail';
+
+                                echo "<tr>
+                                        <td>{$quizname}</td>
+                                        <td style='text-align: center;'>{$score}</td>
+                                        <td style='text-align: center;'>{$totalscore}</td>
+                                        <td style='text-align: center;'><span class='remark {$remark_class}'>{$remark}</span></td>
+                                      </tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='4' style='text-align: center; color: var(--text-secondary);'>You haven't taken any quizzes yet. <a href='homestud.php'>Click here</a> to get started!</td></tr>";
+                        }
+                        mysqli_close($conn);
+                    } else {
+                        echo "<tr><td colspan='4' style='text-align: center; color:#f87171;'>{$db_error}</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
     </div>
+</div>
 
+<style>
+    .remark {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    .remark.remark-pass {
+        background-color: rgba(74, 222, 128, 0.2); /* Green */
+        color: #4ade80;
+    }
+    .remark.remark-fail {
+        background-color: rgba(248, 113, 113, 0.2); /* Red */
+        color: #f87171;
+    }
+</style>
 
-<div class="container ">
-  
-		<div class="row">
-            <div class="col-sm-12 mb-3">  
-              <div class="card card-body bg-gradient-white text-dark mt-3">
-			   <div class="col-12 mx-auto text-center">
-            <span class="badge badge-default badge-pill mb-3">Score Card</span>
-          </div>
-			  <?php 
-            $sql ="select * from score,quiz where score.usn='{$usn}' and score.quizid=quiz.quizid";
-            $res=mysqli_query($conn,$sql);
-            if($res)
-            {
-                echo "<table id=\"sc\" class=\" table table-striped table-hover table-bordered text-center text-primary\">
-				<thead >
-				<tr>
-				<td>Quiz Title</td>
-				<td>Score Obtained</td>
-				<td>Total Questions</td>
-				<td>Remarks</td>
-				</tr>
-				</thead>";
-                while ($row = mysqli_fetch_assoc($res)) {                
-                    echo "<tr  class=\" text-center text-dark\"><td>".$row["quizname"]."</td><td>".$row["score"]."</td><td>".$row["totalscore"]."</td><td>".$row["remark"]."</tr>"; 
-                }
-                echo "</table>";
-            }
-            else{
-                echo " ".mysqli_error($conn);
-            }
-            ?>
-         
-              </div>
-       </div>
-    </div>	
-
-	
-
-        </div>
-</section>
-
-
-    <?php require("footer.php");?>
-
-</body>
-
-</html>
+<?php
+include_once 'footer.php';
+?>

@@ -1,198 +1,95 @@
-<html>
-
-<?php require ("header.php");?>
-
-
 <?php
-session_start();
+// Start session and check if the user is logged in as a student
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Redirect to login if not logged in or not a student
+if (!isset($_SESSION['usn'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Include the database connection and header
 require_once 'sql.php';
-                $conn = mysqli_connect($host, $user, $ps, $project);if (!$conn) {
-    echo "<script>alert(\"Database error retry after some time !\")</script>";
-} else {
-    $usn = $_SESSION["usn"];
-    $sql = "select * from student where usn='{$usn}'";
-    $res =   mysqli_query($conn, $sql);
-    if ($res == true) {
-        global $dbusn, $dbpw;
-        while ($row = mysqli_fetch_array($res)) {
-            $dbusn = $row['usn'];
-            $dbname = $row['name'];
-			$dbmail = $row['mail'];
-            $dbphno = $row['phno'];
-            $dbgender = $row['gender'];
-            $dbdob = $row['DOB'];
-            $dbdept = $row['dept'];
-        }
-    }
+include_once 'header.php';
+
+// Establish database connection
+$conn = mysqli_connect($host, $user, $ps, $project);
+if (!$conn) {
+    $db_error = "Could not connect to the database. Please try again later.";
 }
 ?>
 
-  <body class="bg-white" id="top">
-    <!-- Navbar -->
-    <nav
-      id="navbar-main"
-      class="
-        navbar navbar-main navbar-expand-lg
-        bg-default
-        navbar-light
-        position-sticky
-        top-0
-        shadow
-        py-0
-      "
-    >
-      <div class="container">
-        <ul class="navbar-nav navbar-nav-hover align-items-lg-center">
-          <li class="nav-item dropdown">
-            <a href="index.php" class="navbar-brand mr-lg-5 text-white">
-                               <img src="assets/img/navbar.png" />
-            </a>
-          </li>
-        </ul>
+<div class="container">
+    <h2 style="margin-bottom: 0.5rem;">Welcome, <?php echo htmlspecialchars($_SESSION['name']); ?>!</h2>
+    <p style="color:var(--text-secondary); margin-top:0; margin-bottom:2rem;">Ready to test your knowledge?</p>
 
-        <button
-          class="navbar-toggler bg-white"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbar_global"
-          aria-controls="navbar_global"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon text-white"></span>
-        </button>
-        <div class="navbar-collapse collapse bg-default" id="navbar_global">
-          <div class="navbar-collapse-header">
-            <div class="row">
-              <div class="col-10 collapse-brand">
-                <a href="index.html">
-                  <img src="assets/img/navbar.png" />
-                </a>
-              </div>
-              <div class="col-2 collapse-close bg-danger">
-                <button
-                  type="button"
-                  class="navbar-toggler"
-                  data-toggle="collapse"
-                  data-target="#navbar_global"
-                  aria-controls="navbar_global"
-                  aria-expanded="false"
-                  aria-label="Toggle navigation"
-                >
-                  <span></span>
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ul class="navbar-nav align-items-lg-center ml-auto">
-		  
-				
-				 <li class="nav-item">
-              <a href="homestud.php" class="nav-link">
-                <span class="text-success nav-link-inner--text font-weight-bold"
-                  ><i class="text-success fad fa-home"></i> DashBoard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="studscorecard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-poll"></i> ScoreCard</span
-                >
-              </a>
-            </li>
-			
-			 <li class="nav-item">
-              <a href="studleaderboard.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fad fa-award"></i> LeaderBoard</span
-                >
-              </a>
-            </li>
-			
-			
-			 <li class="nav-item">
-              <a href="studprofile.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-white fas fa-user-circle"></i> <?php echo $dbname ?></span
-                >
-              </a>
-            </li>
-		  
-		   <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <span class="text-white nav-link-inner--text font-weight-bold"
-                  ><i class="text-danger fas fa-power-off"></i> Logout</span
-                >
-              </a>
-            </li>
-		  
-
-          
-          </ul>
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa fa-list-alt"></i> Available Quizzes</h3>
+            <p style="color:var(--text-secondary); margin-top:-0.5rem;">Select a quiz from the list below to begin.</p>
         </div>
-      </div>
-    </nav>
-    <!-- End Navbar -->
 
-	
-  <section class="section section-shaped section-lg">
-    <div class="shape shape-style-1 shape-primary">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Quiz Title</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    // Fetch and display quizzes from the database
+                    if (isset($conn)) {
+                        $sql = "SELECT * FROM quiz";
+                        $res = mysqli_query($conn, $sql);
+
+                        if (mysqli_num_rows($res) > 0) {
+                            while ($row = mysqli_fetch_assoc($res)) {
+                                // Sanitize data before displaying
+                                $quiz_id = htmlspecialchars($row['quizid']);
+                                $quiz_name = htmlspecialchars($row['quizname']);
+                                
+                                // **FIX:** Removed the 'subject' column from the display
+                                echo "<tr>
+                                        <td>{$quiz_name}</td>
+                                        <td style='text-align: right;'>
+                                            <a href='takeq.php?q={$quiz_id}' class='btn'>Take Quiz</a>
+                                        </td>
+                                      </tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='2' style='text-align:center; color:var(--text-secondary);'>No quizzes are available at the moment. Please check back later.</td></tr>";
+                        }
+                        mysqli_close($conn);
+                    } else {
+                        // Display database connection error
+                        echo "<tr><td colspan='2' style='text-align:center; color:#f87171;'>{$db_error}</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-
-
-<div class="container"> 
-      
-<div class="row">
-            <div class="col-sm-12 mb-3">  
-              <div class="card card-body bg-gradient-white text-white mt-3">
-			  <div class="col-12 mx-auto text-center">
-            <span class="badge badge-danger badge-pill mb-3">Take any Quiz</span>
-          </div>
-                   <?php 
-            $sql ="select * from quiz";
-            $res=mysqli_query($conn,$sql);
-            if($res)
-            {
-                echo "<table class=\" table table-striped table-hover table-bordered text-center \">
-				<thead class=\" font-weight-bold \">
-				<tr>
-				<td>Quiz Title</td>
-				<td>Created on</td>
-				<td>Created By</td>
-				</tr>
-				</thead>";
-                while ($row = mysqli_fetch_assoc($res)) {                
-                    echo "<tr><td>".$row["quizname"]."</td>
-					<td>".$row["date_created"]."</td>
-					<td>".$row["staffid"]."</td>
-					<td><a id=\"tq\" href='takeq.php?qid=".$row['quizid']."'>Take Quiz</a></td></tr>"; 
-                }
-                echo "</table>";
-            }
-            ?>
-                  </div>
-                </div>
-              </div>  
-
-	
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+        <div class="card">
+            <h3><i class="fa fa-trophy"></i> Your Scorecard</h3>
+            <p style="color:var(--text-secondary);">Check your past performance and scores.</p>
+            <br>
+            <a href="studscorecard.php" class="btn btn-secondary">View My Scores</a>
+        </div>
+        <div class="card">
+            <h3><i class="fa fa-users"></i> Leaderboard</h3>
+            <p style="color:var(--text-secondary);">See how you rank among your peers.</p>
+            <br>
+            <a href="studleaderboard.php" class="btn btn-secondary">View Leaderboard</a>
+        </div>
     </div>
-</section>
+</div>
 
-    <?php require("footer.php");?>
-
-</body>
-</html>
+<?php
+include_once 'footer.php';
+?>
