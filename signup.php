@@ -10,10 +10,11 @@ function handleSignup($pdo, $type) {
     
     // Define fields based on type
     $fields = ['name', 'email', 'phone', 'dept', 'dob', 'gender', 'password', 'cpassword'];
-    if ($is_student) $fields[] = 'usn'; else $fields[] = 'staffid';
+    // Use different names for unique IDs from the form
+    if ($is_student) $fields['id_field'] = 'usn'; else $fields['id_field'] = 'staffid';
     
     $data = [];
-    foreach ($fields as $field) {
+    foreach ($fields as $key => $field) {
         if (empty($_POST[$field])) return ['message' => 'All fields are required.', 'type' => 'error'];
         $data[$field] = $_POST[$field];
     }

@@ -36,7 +36,7 @@ include_once 'header.php';
             <p>Please enter your credentials to access the dashboard.</p>
         </div>
         <?php if ($error_message): ?>
-            <p style="color: #f87171; text-align: center; margin-bottom: 1rem;"><?php echo $error_message; ?></p>
+            <p style="color: #f87171; text-align: center; margin-bottom: 1rem;"><?php echo htmlspecialchars($error_message); ?></p>
         <?php endif; ?>
         <form action="loginstaff.php" method="post" autocomplete="off">
             <div class="form-group">
