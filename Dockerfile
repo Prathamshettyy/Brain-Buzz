@@ -1,11 +1,12 @@
 # Use official PHP Apache image
 FROM php:8.2-apache
 
-# Install PDO extensions for MySQL and PostgreSQL
-RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql
-
-# Enable Apache mod_rewrite if needed
-RUN a2enmod rewrite
+# Install system dependencies for PDO extensions
+RUN apt-get update && \
+    apt-get install -y libpq-dev libzip-dev zip unzip && \
+    docker-php-ext-install pdo pdo_mysql pdo_pgsql && \
+    a2enmod rewrite && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy source code into container
 COPY . /var/www/html/
