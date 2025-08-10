@@ -27,6 +27,14 @@ if (isset($_POST["submit"])) {
     } else {
         $mail = new PHPMailer(true);
         try {
+            // --- YOUR NEW EMAIL SERVER DETAILS ---
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = getenv('MAIL_USERNAME');
+            $mail->Password   = getenv('MAIL_PASSWORD');
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = 465;
 
             // --- RECIPIENTS ---
             $mail->setFrom($email, htmlspecialchars($name));
