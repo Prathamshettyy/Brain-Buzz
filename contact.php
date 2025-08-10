@@ -26,32 +26,32 @@ if (isset($_POST["submit"])) {
         $feedback = ['message' => 'Please enter a valid email address.', 'type' => 'error'];
     } else {
         try {
-            $mail = new PHPMailer(true);
+           $mail = new PHPMailer(true);
 
-            // Load environment variables safely
-            $smtpHost      = $_ENV['SMTP_HOST']      ?? getenv('SMTP_HOST')      ?? '';
-            $smtpUsername  = $_ENV['SMTP_USERNAME']  ?? getenv('SMTP_USERNAME')  ?? '';
-            $smtpPassword  = $_ENV['SMTP_PASSWORD']  ?? getenv('SMTP_PASSWORD')  ?? '';
-            $smtpPort      = $_ENV['SMTP_PORT']      ?? getenv('SMTP_PORT')      ?? 587; // default TLS port
-            $smtpFromEmail = $_ENV['SMTP_FROM_EMAIL']?? getenv('SMTP_FROM_EMAIL')?? $smtpUsername;
-            $smtpFromName  = $_ENV['SMTP_FROM_NAME'] ?? getenv('SMTP_FROM_NAME') ?? 'Brain Buzz Admin';
-            $smtpSecure    = $_ENV['SMTP_SECURE']    ?? getenv('SMTP_SECURE')    ?? 'tls';
+$smtpHost      = $_ENV['SMTP_HOST']      ?? getenv('SMTP_HOST')      ?? '';
+$smtpUsername  = $_ENV['SMTP_USERNAME']  ?? getenv('SMTP_USERNAME')  ?? '';
+$smtpPassword  = $_ENV['SMTP_PASSWORD']  ?? getenv('SMTP_PASSWORD')  ?? '';
+$smtpPort      = $_ENV['SMTP_PORT']      ?? getenv('SMTP_PORT')      ?? 587;
+$smtpFromEmail = $_ENV['SMTP_FROM_EMAIL']?? getenv('SMTP_FROM_EMAIL')?? $smtpUsername;
+$smtpFromName  = $_ENV['SMTP_FROM_NAME'] ?? getenv('SMTP_FROM_NAME') ?? 'Brain Buzz Admin';
+$smtpSecure    = $_ENV['SMTP_SECURE']    ?? getenv('SMTP_SECURE')    ?? 'tls';
 
-            // Configure PHPMailer SMTP
-            $mail->isSMTP();
-            $mail->Host       = $smtpHost;
-            $mail->SMTPAuth   = true;
-            $mail->Username   = $smtpUsername;
-            $mail->Password   = $smtpPassword;
-            $mail->Port       = (int) $smtpPort;
-            $mail->SMTPSecure = strtolower($smtpSecure) === 'ssl' 
-                ? PHPMailer::ENCRYPTION_SMTPS 
-                : PHPMailer::ENCRYPTION_STARTTLS;
+$mail->isSMTP();
+$mail->Host       = $smtpHost;
+$mail->SMTPAuth   = true;
+$mail->Username   = $smtpUsername;
+$mail->Password   = $smtpPassword;
+$mail->Port       = (int) $smtpPort;
+$mail->SMTPSecure = strtolower($smtpSecure) === 'ssl'
+                      ? PHPMailer::ENCRYPTION_SMTPS
+                      : PHPMailer::ENCRYPTION_STARTTLS;
 
-            // Set From and Reply-To
-            $mail->setFrom($smtpFromEmail, $smtpFromName);
-            $mail->addAddress($_ENV['RECIPIENT_EMAIL'] ?? getenv('RECIPIENT_EMAIL') ?? $smtpFromEmail, $_ENV['RECIPIENT_NAME'] ?? getenv('RECIPIENT_NAME') ?? 'Brain Buzz Admin');
-            $mail->addReplyTo($email, $name); // Visitor's email for reply
+$mail->setFrom($smtpFromEmail, $smtpFromName);
+$mail->addAddress($_ENV['RECIPIENT_EMAIL'] ?? getenv('RECIPIENT_EMAIL'));
+$mail->addReplyTo($email, $name);
+
+// … rest of your message setup and send
+
 
             // Email content
             $mail->isHTML(true);
