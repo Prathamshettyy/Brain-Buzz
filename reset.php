@@ -65,15 +65,20 @@ if (isset($_POST['submit'])) {
                 }
                 if ($dbmail === $username) {
                     $otp = mt_rand(100000, 999999);
-                    require 'PHPMailer/PHPMailerAutoload.php';
-                    $mail = new PHPMailer;
-                    $mail->isSMTP();                                      // Set mailer to use SMTP
-                    $mail->Host = 'smtp.gmail.com';  // Specify main and backup SMTP servers
-                    $mail->SMTPAuth = true;                               // Enable SMTP authentication
-                    $mail->Username = 'eclassroom1999@gmail.com';
-                    $mail->Password = 'mloquiqighoyiytq';                           // SMTP password
-                    $mail->SMTPSecure = 'ssl';                            // Enable TLS encryption, `ssl` also accepted
-                    $mail->Port = 465;                                    // TCP port to connect to
+                   // Load environment variables
+require __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$mail = new PHPMailer(true);
+$mail->isSMTP();
+$mail->Host       = $_ENV['SMTP_HOST'];
+$mail->SMTPAuth   = true;
+$mail->Username   = $_ENV['SMTP_USERNAME'];
+$mail->Password   = $_ENV['SMTP_PASSWORD'];
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+$mail->Port       = (int) $_ENV['SMTP_PORT'];
+                                    // TCP port to connect to
                     $mail->setFrom('eclassroom1999@gmail.com');
                     $mail->addAddress($dbmail);
                     $mail->addReplyTo('eclassroom1999@gmail.com');

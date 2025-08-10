@@ -33,14 +33,19 @@ if (isset($_POST['send_otp'])) {
 
             $mail = new PHPMailer(true);
             try {
-                // --- YOUR NEW EMAIL SERVER DETAILS ---
-                $mail->isSMTP();
-                $mail->Host       = 'smtp.gmail.com';
-                $mail->SMTPAuth   = true;
-                $mail->Username = getenv('SMTP_USERNAME'); 
-                $mail->Password = getenv('SMTP_PASSWORD');
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                $mail->Port       = 465;
+                // Load environment variables
+require __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$mail = new PHPMailer(true);
+$mail->isSMTP();
+$mail->Host       = $_ENV['SMTP_HOST'];
+$mail->SMTPAuth   = true;
+$mail->Username   = $_ENV['SMTP_USERNAME'];
+$mail->Password   = $_ENV['SMTP_PASSWORD'];
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+$mail->Port       = (int) $_ENV['SMTP_PORT'];
 
                 //Recipients
                 $mail->setFrom('no-reply@brainbuzz.com', 'Brain-Buzz');

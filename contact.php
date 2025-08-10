@@ -27,14 +27,20 @@ if (isset($_POST["submit"])) {
     } else {
         $mail = new PHPMailer(true);
         try {
-            // --- YOUR NEW EMAIL SERVER DETAILS ---
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'randomshithere99@gmail.com'; 
-            $mail->Password   = 'dxkp ltvq orpv dltj'; // Your App Password
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            $mail->Port       = 465;
+            // Load environment variables
+require __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// --- YOUR NEW EMAIL SERVER DETAILS ---
+$mail = new PHPMailer(true);
+$mail->isSMTP();
+$mail->Host       = $_ENV['SMTP_HOST'];
+$mail->SMTPAuth   = true;
+$mail->Username   = $_ENV['SMTP_USERNAME'];
+$mail->Password   = $_ENV['SMTP_PASSWORD'];
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+$mail->Port       = (int) $_ENV['SMTP_PORT'];
 
             // --- RECIPIENTS ---
             $mail->setFrom($email, htmlspecialchars($name));
