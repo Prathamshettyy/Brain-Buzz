@@ -15,43 +15,64 @@ use PHPMailer\PHPMailer\Exception;
 $feedback = null;
 $name = $email = $message = ''; // Initialize variables
 
+// Load environment variables from $_ENV or getenv()
+// (If you're using vlucas/phpdotenv, load it earlier in your bootstrap)
+$smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
+$smtpPort = getenv('SMTP_PORT') ?: 465;
+$smtpSecure = getenv('SMTP_SECURE') ?: 'ssl'; // or 'tls'
+$smtpUser = getenv('SMTP_USERNAME') ?: null;
+$smtpPass = getenv('SMTP_PASSWORD') ?: null;
+$recipientEmail = getenv('RECIPIENT_EMAIL') ?: 'prathamshetty329@gmail.com';
+$recipientName  = getenv('RECIPIENT_NAME') ?: 'Brain Buzz Admin';
+
 if (isset($_POST["submit"])) {
-    $name = trim($_POST["name"]);
-    $email = trim($_POST["email"]);
-    $message = trim($_POST["message"]);
+    $name = trim($_POST["name"] ?? '');
+    $email = trim($_POST["email"] ?? '');
+    $message = trim($_POST["message"] ?? '');
     
     if (empty($name) || empty($email) || empty($message)) {
         $feedback = ['message' => 'All fields are required.', 'type' => 'error'];
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $feedback = ['message' => 'Please enter a valid email address.', 'type' => 'error'];
     } else {
-        $mail = new PHPMailer(true);
-        try {
-            // --- YOUR NEW EMAIL SERVER DETAILS ---
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'randomshithere99@gmail.com'; 
-            $mail->Password   = 'dxkp ltvq orpv dltj'; // Your App Password
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            $mail->Port       = 465;
+        // Safety: ensure SMTP credentials are available
+        if (empty($smtpUser) || empty($smtpPass)) {
+            $feedback = ['message' => 'Mail server is not configured. Contact the site administrator.', 'type' => 'error'];
+        } else {
+            $mail = new PHPMailer(true);
+            try {
+                // --- SMTP server configuration (from env) ---
+                $mail->isSMTP();
+                $mail->Host       = $smtpHost;
+                $mail->SMTPAuth   = true;
+                $mail->Username   = $smtpUser;
+                $mail->Password   = $smtpPass;
+                // map common values to PHPMailer constants
+                if (strtolower($smtpSecure) === 'tls') {
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                } else {
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                }
+                $mail->Port       = (int) $smtpPort;
 
-            // --- RECIPIENTS ---
-            $mail->setFrom($email, htmlspecialchars($name));
-            $mail->addAddress('prathamshetty329@gmail.com', 'Brain Buzz Admin'); 
+                // --- RECIPIENTS ---
+                $mail->setFrom($email, htmlspecialchars($name));
+                $mail->addAddress($recipientEmail, $recipientName);
 
-            // --- CONTENT ---
-            $mail->isHTML(true);
-            $mail->Subject = 'New Contact Form Message from ' . htmlspecialchars($name);
-            $mail->Body    = "<b>Name:</b> " . htmlspecialchars($name) . "<br>" .
-                           "<b>Email:</b> " . htmlspecialchars($email) . "<br><br>" .
-                           "<b>Message:</b><br>" . nl2br(htmlspecialchars($message));
+                // --- CONTENT ---
+                $mail->isHTML(true);
+                $mail->Subject = 'New Contact Form Message from ' . htmlspecialchars($name);
+                $mail->Body    = "<b>Name:</b> " . htmlspecialchars($name) . "<br>" .
+                               "<b>Email:</b> " . htmlspecialchars($email) . "<br><br>" .
+                               "<b>Message:</b><br>" . nl2br(htmlspecialchars($message));
 
-            $mail->send();
-            $feedback = ['message' => 'Your message has been sent successfully!', 'type' => 'success'];
-            $name = $email = $message = '';
-        } catch (Exception $e) {
-            $feedback = ['message' => 'Message could not be sent. Please double-check your App Password.', 'type' => 'error'];
+                $mail->send();
+                $feedback = ['message' => 'Your message has been sent successfully!', 'type' => 'success'];
+                $name = $email = $message = '';
+            } catch (Exception $e) {
+                // Do not echo $e->getMessage() to users in production
+                $feedback = ['message' => 'Message could not be sent. Please contact the site admin.', 'type' => 'error'];
+            }
         }
     }
 }
@@ -73,8 +94,8 @@ include_once 'header.php';
         <a href="https://wa.me/919480242018?text=Message%20From%20Brain-Buzz" target="_blank" class="card-link">
             <div class="action-card"><i class="fab fa-whatsapp"></i><h3>WhatsApp</h3><p>Chat with us directly</p></div>
         </a>
-        <a href="mailto:prathamshetty329@gmail.com" class="card-link">
-             <div class="action-card"><i class="fa fa-envelope"></i><h3>Email Us</h3><p>prathamshetty329@gmail.com</p></div>
+        <a href="mailto:<?php echo htmlspecialchars($recipientEmail); ?>" class="card-link">
+             <div class="action-card"><i class="fa fa-envelope"></i><h3>Email Us</h3><p><?php echo htmlspecialchars($recipientEmail); ?></p></div>
         </a>
     </div>
 
