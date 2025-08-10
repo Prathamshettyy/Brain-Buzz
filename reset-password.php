@@ -24,19 +24,19 @@ if (isset($_POST['reset_password'])) {
         } elseif ($new_password !== $confirm_password) {
             $feedback = ['message' => 'The new passwords do not match.', 'type' => 'error'];
         } else {
-            // --- ✅ Securely hash the new password ---
+            // Securely hash the new password
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
             $email = $_SESSION['reset_email'];
             $type = $_SESSION['reset_type'];
 
-            // Prepare the SQL statement to update the password
-            // The table name is dynamic but validated, and columns are fixed
+            // Prepare the SQL statement using PostgreSQL-compatible double quotes
             $sql = "UPDATE \"{$type}\" SET pw = ? WHERE mail = ?";
             $stmt = $pdo->prepare($sql);
 
-            // Execute the update
-            if ($stmt->execute(['password' => $hashed_password, 'email' => $email])) {
+            // *** THIS IS THE FIX ***
+            // Execute the update using an indexed array that matches the "?" placeholders
+            if ($stmt->execute([$hashed_password, $email])) {
                 // Success! Destroy the session and redirect to the login page
                 session_destroy();
                 header("Location: login.php?reset=success");
@@ -46,8 +46,10 @@ if (isset($_POST['reset_password'])) {
             }
         }
     } catch (PDOException $e) {
-    // This is for debugging to show the specific database error.
-    $feedback = ['message' => 'Database Error: ' . $e->getMessage(), 'type' => 'error'];
+        // Restore the user-friendly error message for production
+        $feedback = ['message' => 'A database error occurred. Please contact support.', 'type' => 'error'];
+        // For your own future debugging, you can log the real error like this:
+        // error_log('Password Reset Failed: ' . $e->getMessage());
     }
 }
 
