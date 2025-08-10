@@ -1,7 +1,4 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable('/etc/secrets');
-$dotenv->load();
 
 // Start session at the top for flash messages etc.
 if (session_status() === PHP_SESSION_NONE) {
@@ -31,6 +28,8 @@ if (isset($_POST["submit"])) {
     } else {
         $mail = new PHPMailer(true);
         try {
+            $host = $_ENV['SMTP_HOST'] ?? getenv('SMTP_HOST');
+
             // Email server config from .env
             $mail->isSMTP();
             $mail->Host       = $_ENV['SMTP_HOST'];
