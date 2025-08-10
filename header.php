@@ -19,52 +19,104 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
 
     <link href="style.css" rel="stylesheet" />
+<style>
+    .nav-toggle {
+    display: none; /* Hidden by default on large screens */
+    background: none;
+    border: 2px solid var(--text-secondary);
+    border-radius: 5px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+}
+.nav-toggle .hamburger {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: var(--text-secondary);
+    margin: 5px 0;
+    transition: 0.4s;
+}
 
-    <style>
-        .nav-toggle {
-            display: none; /* Hidden by default on large screens */
-            background: none;
-            border: 2px solid var(--text-secondary);
-            border-radius: 5px;
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-        }
-        .nav-toggle .hamburger {
-            display: block;
-            width: 25px;
-            height: 3px;
-            background-color: var(--text-secondary);
-            margin: 5px 0;
-            transition: 0.4s;
-        }
+@media (max-width: 768px) {
+    /* Keep Brain-Buzz & toggle button in one row */
+    .site-header .container {
+        display: flex;
+        flex-direction: row; /* force side-by-side */
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
 
-        @media (max-width: 768px) {
-            .main-nav ul {
-                display: none; /* Hide the nav links by default on mobile */
-                flex-direction: column;
-                position: absolute;
-                top: 70px; /* Position below the header */
-                left: 0;
-                width: 100%;
-                background-color: var(--surface-color);
-                padding: 1rem 0;
-            }
-            .main-nav ul.active {
-                display: flex; /* Show the nav links when the menu is active */
-            }
-            .main-nav ul li {
-                width: 100%;
-                text-align: center;
-            }
-            .main-nav ul li a {
-                padding: 1rem;
-                display: block; /* Make the whole area clickable */
-            }
-            .nav-toggle {
-                display: block; /* Show the hamburger button on mobile */
-            }
-        }
-    </style>
+    .logo {
+        flex: 0 0 auto;
+    }
+
+    .nav-toggle {
+        display: block;
+        flex: 0 0 auto;
+        margin-left: auto; /* push to far right */
+    }
+ @media (max-width: 768px) {
+    .main-nav {
+        position: relative;
+    }
+
+    .main-nav ul {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: auto;
+        min-width: 160px; /* fixed equal width for all buttons */
+        background: rgba(5, 5, 5, 0.95);
+        border-radius: 10px;
+        padding: 0.5rem;
+        margin: 0;
+        list-style: none;
+        box-shadow: 0 6px 16px rgba(60, 95, 136, 0.25);
+        animation: slideDown 0.3s ease forwards;
+        z-index: 1000;
+        align-items: center; /* center the buttons */
+    }
+
+    .main-nav ul.active {
+        display: flex;
+    }
+
+    .main-nav ul li {
+        width: 100%;
+    }
+
+    .main-nav ul li a {
+        display: block;
+        width: 140px; /* equal size for all buttons */
+        padding: 0.6rem 0;
+        font-size: 0.9rem;
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 6px;
+        background: rgba(40, 40, 40, 0.9);
+        transition: background 0.2s ease;
+    }
+
+    .main-nav ul li + li {
+        margin-top: 0.4rem;
+    }
+
+    .main-nav ul li a:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+}
+
+
+</style>
 </head>
 <body>
     <header class="site-header">

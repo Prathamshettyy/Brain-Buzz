@@ -35,6 +35,7 @@ include_once 'header.php';
         from { opacity: 0; transform: translateY(-20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    
     .hero-section h1 {
         font-size: 3.5rem;
         font-weight: 700;
@@ -51,17 +52,28 @@ include_once 'header.php';
         max-width: 600px;
         margin: 0 auto 2rem auto;
     }
+
+    /* --- Hero Buttons --- */
     .hero-actions {
         display: flex;
         justify-content: center;
         gap: 1rem;
+        flex-wrap: wrap; /* Allow wrapping */
     }
     .hero-actions .btn {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        min-width: 200px; /* Keep buttons consistent */
+        text-align: center;
     }
     .hero-actions .btn:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    @media (max-width: 500px) {
+        .hero-actions {
+            flex-direction: column;
+            align-items: center;
+        }
     }
 
     /* --- Features Section Enhancements --- */
@@ -84,7 +96,8 @@ include_once 'header.php';
     }
     .feature-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        /* Glowing blue shadow */
+        box-shadow: 0 20px 40px rgba(56, 189, 248, 0.2);
     }
     .feature-card .icon {
         font-size: 2.5rem;
@@ -102,12 +115,6 @@ include_once 'header.php';
     .feature-card p {
         color: var(--text-secondary);
     }
-    /* This is the new hover effect */
-.feature-card:hover {
-    transform: translateY(-10px);
-    /* THIS IS THE LINE I CHANGED */
-    box-shadow: 0 20px 40px rgba(56, 189, 248, 0.2); /* A glowing blue shadow */
-}
 </style>
 
 <div class="container">
