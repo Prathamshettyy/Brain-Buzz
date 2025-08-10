@@ -6,12 +6,16 @@ $error_message = null;
 
 if (isset($_POST['login_staff'])) {
     try {
-        $sql = "SELECT * FROM staff WHERE staffid = ?";
+        // Find the staff member by their email (or staffid, if you prefer)
+        $sql = "SELECT * FROM staff WHERE mail = ?";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$_POST['staffid']]);
+        $stmt->execute([$_POST['email']]);
         $row = $stmt->fetch();
 
-        if ($row && $_POST['pass'] === $row['pw']) {
+        // *** THIS IS THE FIX ***
+        // Use password_verify() to securely check the password against the stored hash.
+        if ($row && password_verify($_POST['pass'], $row['pw'])) {
+            // Password is correct, set session variables
             $_SESSION["name"] = $row['name'];
             $_SESSION["staffid"] = $row['staffid'];
             $_SESSION["email"] = $row['mail'];
@@ -19,10 +23,11 @@ if (isset($_POST['login_staff'])) {
             header("Location: homestaff.php");
             exit();
         } else {
-            $error_message = "Invalid Staff ID or Password.";
+            $error_message = "Invalid Email or Password.";
         }
     } catch (PDOException $e) {
         $error_message = "A database error occurred.";
+        // For debugging: error_log($e->getMessage());
     }
 }
 
@@ -36,12 +41,12 @@ include_once 'header.php';
             <p>Please enter your credentials to access the dashboard.</p>
         </div>
         <?php if ($error_message): ?>
-            <p style="color: #f87171; text-align: center; margin-bottom: 1rem;"><?php echo htmlspecialchars($error_message); ?></p>
+            <div class="message error"><?php echo htmlspecialchars($error_message); ?></div>
         <?php endif; ?>
         <form action="loginstaff.php" method="post" autocomplete="off">
             <div class="form-group">
-                <label>Staff ID</label>
-                <input type="text" name="staffid" required>
+                <label>Email Address</label>
+                <input type="email" name="email" required>
             </div>
             <div class="form-group">
                 <label>Password</label>
@@ -54,5 +59,18 @@ include_once 'header.php';
         </form>
     </div>
 </div>
+
+<style>
+/* Add some basic styling for the error message */
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 1rem;
+    border: 1px solid #f5c6cb;
+}
+</style>
 
 <?php include_once 'footer.php'; ?>

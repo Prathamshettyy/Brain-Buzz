@@ -7,36 +7,30 @@ $error_message = null;
 
 if (isset($_POST['login_student'])) {
     try {
-        // Use prepared statements for security
-        $sql = "SELECT * FROM student WHERE usn = ?";
+        // Use prepared statements to find the student by their email
+        $sql = "SELECT * FROM student WHERE mail = ?";
         $stmt = $pdo->prepare($sql);
-        
-        // The execute method automatically handles sanitizing the input
-        $stmt->execute([$_POST['usn']]); 
-        
+        $stmt->execute([$_POST['email']]);
         $row = $stmt->fetch(); // Fetch the first matching row
 
-        if ($row) {
-            // For production, you should use password_verify()
-            if ($_POST['pw'] === $row['pw']) {
-                // Set session variables for the student
-                $_SESSION["name"] = $row['name'];
-                $_SESSION["usn"] = $row['usn'];
-                $_SESSION["email"] = $row['mail'];
-                $_SESSION["acc_type"] = 'student';
+        // *** THIS IS THE FIX ***
+        // Use password_verify() to securely check the submitted password against the stored hash
+        if ($row && password_verify($_POST['pw'], $row['pw'])) {
+            // Password is correct, set session variables for the student
+            $_SESSION["name"] = $row['name'];
+            $_SESSION["usn"] = $row['usn'];
+            $_SESSION["email"] = $row['mail'];
+            $_SESSION["acc_type"] = 'student';
 
-                header("Location: homestud.php");
-                exit();
-            } else {
-                $error_message = "Invalid USN or Password.";
-            }
+            header("Location: homestud.php");
+            exit();
         } else {
-            $error_message = "Invalid USN or Password.";
+            $error_message = "Invalid Email or Password.";
         }
     } catch (PDOException $e) {
         // If there's a database error, show a generic message
         $error_message = "A database error occurred. Please try again later.";
-        // Optional: log the actual error for debugging: error_log($e->getMessage());
+        // For debugging: error_log($e->getMessage());
     }
 }
 
@@ -48,19 +42,17 @@ include_once 'header.php';
     <div class="card">
         <div class="card-header">
             <h2>Student Login</h2>
-            <p>Welcome back! Enter your USN to begin.</p>
+            <p>Welcome back! Enter your credentials to begin.</p>
         </div>
 
-        <?php
-        if (isset($error_message)) {
-            echo '<p style="color: #f87171; text-align: center; margin-bottom: 1rem;">' . htmlspecialchars($error_message) . '</p>';
-        }
-        ?>
+        <?php if ($error_message): ?>
+            <div class="message error"><?php echo htmlspecialchars($error_message); ?></div>
+        <?php endif; ?>
 
         <form action="loginstud.php" method="post" autocomplete="off">
             <div class="form-group">
-                <label for="usn">USN (University Seat Number)</label>
-                <input type="text" id="usn" name="usn" required>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
             </div>
             <div class="form-group">
                 <label for="pw">Password</label>
@@ -74,6 +66,17 @@ include_once 'header.php';
     </div>
 </div>
 
-<?php
-include_once 'footer.php';
-?>
+<style>
+/* Add some basic styling for the error message */
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 1rem;
+    border: 1px solid #f5c6cb;
+}
+</style>
+
+<?php include_once 'footer.php'; ?>
