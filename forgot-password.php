@@ -1,16 +1,11 @@
 <?php
-// This page handles the first step of password reset: sending the OTP
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once 'sql.php'; // Your PDO connection or DB access
 
-require_once 'sql.php'; // This creates the $pdo object
-
-// Composer autoload for Dotenv and PHPMailer
+// Load PHPMailer & Dotenv but on Render rely on environment variables directly
 require __DIR__ . '/vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable('/etc/secrets');
-$dotenv->load();
-
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -22,7 +17,6 @@ if (isset($_POST['send_otp'])) {
         $email = $_POST['email'];
         $type = $_POST['type']; // 'student' or 'staff'
 
-        // Securely check if the user exists
         $sql = "SELECT * FROM {$type} WHERE mail = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$email]);
@@ -34,58 +28,52 @@ if (isset($_POST['send_otp'])) {
             $_SESSION['reset_email'] = $email;
             $_SESSION['reset_type'] = $type;
 
-            $mail = new PHPMailer(true);
             try {
-                // --- SMTP CONFIG FROM .env ---
+                $mail = new PHPMailer(true);
+
+                $smtpHost      = $_ENV['SMTP_HOST']      ?? getenv('SMTP_HOST')      ?? '';
+                $smtpUsername  = $_ENV['SMTP_USERNAME']  ?? getenv('SMTP_USERNAME')  ?? '';
+                $smtpPassword  = $_ENV['SMTP_PASSWORD']  ?? getenv('SMTP_PASSWORD')  ?? '';
+                $smtpPort      = $_ENV['SMTP_PORT']      ?? getenv('SMTP_PORT')      ?? 587;
+                $smtpFromEmail = $_ENV['SMTP_FROM_EMAIL']?? getenv('SMTP_FROM_EMAIL')?? $smtpUsername;
+                $smtpFromName  = $_ENV['SMTP_FROM_NAME'] ?? getenv('SMTP_FROM_NAME') ?? 'Brain Buzz Admin';
+                $smtpSecure    = $_ENV['SMTP_SECURE']    ?? getenv('SMTP_SECURE')    ?? 'tls';
+
                 $mail->isSMTP();
-                $mail->Host       = $_ENV['SMTP_HOST'];
+                $mail->Host       = $smtpHost;
                 $mail->SMTPAuth   = true;
-                $mail->Username   = $_ENV['SMTP_USERNAME'];
-                $mail->Password   = $_ENV['SMTP_PASSWORD'];
+                $mail->Username   = $smtpUsername;
+                $mail->Password   = $smtpPassword;
+                $mail->Port       = (int) $smtpPort;
+                $mail->SMTPSecure = strtolower($smtpSecure) === 'ssl'
+                    ? PHPMailer::ENCRYPTION_SMTPS
+                    : PHPMailer::ENCRYPTION_STARTTLS;
 
-                // Choose encryption based on .env
-                if (!empty($_ENV['SMTP_SECURE']) && strtolower($_ENV['SMTP_SECURE']) === 'ssl') {
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                } else {
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                }
+                $mail->setFrom($smtpFromEmail, $smtpFromName);
+                $mail->addAddress($email);
 
-                $mail->Port       = (int) $_ENV['SMTP_PORT'];
-
-                // --- RECIPIENTS ---
-                $mail->setFrom($_ENV['SMTP_FROM_EMAIL'], $_ENV['SMTP_FROM_NAME']);
-                $mail->addAddress($email); // Send to user's email
-
-                // --- CONTENT ---
                 $mail->isHTML(true);
                 $mail->Subject = 'Your Brain-Buzz Password Reset Code';
                 $mail->Body    = "Your password reset code is: <b>{$otp}</b>";
 
                 $mail->send();
+
                 header("Location: reset-password.php");
                 exit();
             } catch (Exception $e) {
-                $feedback = [
-                    'message' => "Could not send email. Error: " . htmlspecialchars($mail->ErrorInfo),
-                    'type'    => 'error'
-                ];
+                $feedback = ['message' => "Could not send email. Error: " . htmlspecialchars($mail->ErrorInfo), 'type' => 'error'];
             }
         } else {
-            $feedback = [
-                'message' => 'No account found with that email for the selected user type.',
-                'type'    => 'error'
-            ];
+            $feedback = ['message' => 'No account found with that email for the selected user type.', 'type' => 'error'];
         }
     } catch (PDOException $e) {
-        $feedback = [
-            'message' => 'A database error occurred.',
-            'type'    => 'error'
-        ];
+        $feedback = ['message' => 'A database error occurred.', 'type' => 'error'];
     }
 }
 
 include_once 'header.php';
 ?>
+<!-- Your existing forgot-password HTML and footer here -->
 
 <div class="container form-container">
     <div class="card">
