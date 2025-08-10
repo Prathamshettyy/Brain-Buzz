@@ -1,18 +1,5 @@
 <?php
-// Load phpdotenv manually (no composer)
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Dotenv.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Loader.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Parser.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/RepositoryBuilder.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/Adapter/EnvConstAdapter.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/Adapter/PutenvAdapter.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/Adapter/ServerConstAdapter.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/AdapterRepository.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/RepositoryInterface.php';
 
-// Initialize Dotenv
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
 // This page handles the first step of password reset: sending the OTP
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once 'sql.php'; // This creates the $pdo object

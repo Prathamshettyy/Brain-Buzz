@@ -1,21 +1,4 @@
-
-
 <?php
-// Load phpdotenv manually (no composer)
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Dotenv.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Loader.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Parser.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/RepositoryBuilder.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/Adapter/EnvConstAdapter.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/Adapter/PutenvAdapter.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/Adapter/ServerConstAdapter.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/AdapterRepository.php';
-require __DIR__ . '/vendor/vlucas/phpdotenv/src/Repository/RepositoryInterface.php';
-
-// Initialize Dotenv
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
 // Start session and handle form logic at the top
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -48,8 +31,8 @@ if (isset($_POST["submit"])) {
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
-            $mail->Username   = getenv('MAIL_USERNAME');
-            $mail->Password   = getenv('MAIL_PASSWORD');
+            $mail->Username   = 'randomshithere99@gmail.com'; 
+            $mail->Password   = 'dxkp ltvq orpv dltj'; // Your App Password
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
             $mail->Port       = 465;
 
