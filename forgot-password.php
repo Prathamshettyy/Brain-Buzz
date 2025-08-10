@@ -8,10 +8,9 @@ require_once 'sql.php'; // This creates the $pdo object
 
 // Composer autoload for Dotenv and PHPMailer
 require __DIR__ . '/vendor/autoload.php';
-
-// Load environment variables from .env
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv = Dotenv\Dotenv::createImmutable('/etc/secrets');
 $dotenv->load();
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
