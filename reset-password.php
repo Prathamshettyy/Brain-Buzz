@@ -46,7 +46,8 @@ if (isset($_POST['reset_password'])) {
             }
         }
     } catch (PDOException $e) {
-        $feedback = ['message' => 'A database error occurred. Please contact support.', 'type' => 'error'];
+    // This is for debugging to show the specific database error.
+    $feedback = ['message' => 'Database Error: ' . $e->getMessage(), 'type' => 'error'];
     }
 }
 
