@@ -20,16 +20,16 @@
     <style>
         .site-footer .container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; /* Allows wrapping on smaller screens */
-            gap: 1rem; /* Adds space between items if they wrap */
+            flex-direction: column; /* Stack items vertically */
+            justify-content: center; /* Center vertically */
+            align-items: center;     /* Center horizontally */
+            gap: 0.5rem;             /* Add a little space between the lines */
         }
 
         .footer-links {
             display: flex;
             align-items: center;
-            gap: 1rem; /* Space between the text and icons */
+            gap: 1rem;
         }
 
         .footer-links span {
@@ -40,7 +40,7 @@
         .footer-links a {
             color: var(--text-secondary);
             text-decoration: none;
-            font-size: 1.3rem; /* Makes icons a bit larger */
+            font-size: 1.3rem;
             transition: color 0.3s ease, transform 0.3s ease;
         }
 

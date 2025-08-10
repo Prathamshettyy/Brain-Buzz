@@ -21,7 +21,7 @@ include_once 'header.php';
     }
     .login-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 20px 40px rgba(56, 189, 248, 0.2);
     }
     .login-card i {
         font-size: 3rem;

@@ -1,30 +1,49 @@
 <?php
-// The index page doesn't require session logic at the top,
-// so we can just include the header directly.
+// The index page doesn't require session logic at the top.
 include_once 'header.php';
 ?>
 
 <style>
-    /* --- Styles specific to the Index Page --- */
+    /* --- General Enhancements --- */
+    .fade-in-section {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .fade-in-section.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-    /* Hero Section */
+    /* --- Hero Section Enhancements --- */
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
     .hero-section {
         text-align: center;
         padding: 6rem 1rem;
-        background: linear-gradient(rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.9)), url('assets/img/hero-bg.jpg'); /* Optional: Add a subtle background image */
-        background-size: cover;
-        background-position: center;
+        background: linear-gradient(-45deg, #121212, #1E1E1E, #0ea5e9, #121212);
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
         border-radius: 8px;
         margin-bottom: 4rem;
+    }
+
+    @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     .hero-section h1 {
         font-size: 3.5rem;
         font-weight: 700;
         margin-bottom: 1rem;
-        color: #fff; /* White text for high contrast */
+        color: #fff;
+        animation: fade-in-down 1s ease-out forwards;
     }
     .hero-section h1 .highlight {
-        color: var(--primary-color); /* Use the theme's primary blue */
+        color: var(--primary-color);
     }
     .hero-section p {
         font-size: 1.25rem;
@@ -37,8 +56,15 @@ include_once 'header.php';
         justify-content: center;
         gap: 1rem;
     }
+    .hero-actions .btn {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .hero-actions .btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
 
-    /* Features Section */
+    /* --- Features Section Enhancements --- */
     .features-section {
         padding: 2rem 0;
         text-align: center;
@@ -57,13 +83,17 @@ include_once 'header.php';
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
     }
     .feature-card .icon {
         font-size: 2.5rem;
         color: var(--primary-color);
         margin-bottom: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover .icon {
+        transform: scale(1.1);
     }
     .feature-card h3 {
         font-size: 1.25rem;
@@ -72,12 +102,17 @@ include_once 'header.php';
     .feature-card p {
         color: var(--text-secondary);
     }
-
+    /* This is the new hover effect */
+.feature-card:hover {
+    transform: translateY(-10px);
+    /* THIS IS THE LINE I CHANGED */
+    box-shadow: 0 20px 40px rgba(56, 189, 248, 0.2); /* A glowing blue shadow */
+}
 </style>
 
 <div class="container">
 
-    <section class="hero-section">
+    <section class="hero-section fade-in-section">
         <h1>Welcome to <span class="highlight">Brain-Buzz</span></h1>
         <p>The modern, engaging platform for online quizzes. Sharpen your knowledge, challenge your peers, and track your success.</p>
         <div class="hero-actions">
@@ -86,7 +121,7 @@ include_once 'header.php';
         </div>
     </section>
 
-    <section class="features-section">
+    <section class="features-section fade-in-section">
         <h2>Why Choose Brain-Buzz?</h2>
         <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Everything you need for a seamless quiz experience.</p>
         
@@ -104,14 +139,35 @@ include_once 'header.php';
             </div>
 
             <div class="feature-card">
-                <div class="icon"><i class="fa fa-desktop"></i></div>
-                <h3>Modern Interface</h3>
-                <p>Enjoy our clean, responsive, and dark-themed UI that works beautifully on any device, from desktop to mobile.</p>
+                <div class="icon"><i class="fa fa-magic"></i></div>
+                <h3>Intuitive & Engaging</h3>
+                <p>A streamlined platform built for a smooth, distraction-free experience for both quiz creators and students.</p>
             </div>
         </div>
     </section>
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sections = document.querySelectorAll('.fade-in-section');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    });
+</script>
 
 <?php
 // Finally, include the footer to close the page
