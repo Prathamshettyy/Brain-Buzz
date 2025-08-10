@@ -1,10 +1,14 @@
 <?php
-// Start session and handle form logic at the top
+require __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Start session at the top for flash messages etc.
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Include PHPMailer files
+// PHPMailer dependencies
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
@@ -13,13 +17,13 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 $feedback = null;
-$name = $email = $message = ''; // Initialize variables
+$name = $email = $message = '';
 
 if (isset($_POST["submit"])) {
     $name = trim($_POST["name"]);
     $email = trim($_POST["email"]);
     $message = trim($_POST["message"]);
-    
+
     if (empty($name) || empty($email) || empty($message)) {
         $feedback = ['message' => 'All fields are required.', 'type' => 'error'];
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -27,43 +31,50 @@ if (isset($_POST["submit"])) {
     } else {
         $mail = new PHPMailer(true);
         try {
-            // Load environment variables
-require __DIR__ . '/vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+            // Email server config from .env
+            $mail->isSMTP();
+            $mail->Host       = $_ENV['SMTP_HOST'];
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $_ENV['SMTP_USERNAME'];
+            $mail->Password   = $_ENV['SMTP_PASSWORD'];
 
-// --- YOUR NEW EMAIL SERVER DETAILS ---
-$mail = new PHPMailer(true);
-$mail->isSMTP();
-$mail->Host       = $_ENV['SMTP_HOST'];
-$mail->SMTPAuth   = true;
-$mail->Username   = $_ENV['SMTP_USERNAME'];
-$mail->Password   = $_ENV['SMTP_PASSWORD'];
-$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-$mail->Port       = (int) $_ENV['SMTP_PORT'];
+            // Choose encryption based on your .env
+            if (!empty($_ENV['SMTP_SECURE']) && strtolower($_ENV['SMTP_SECURE']) === 'ssl') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            }
 
-            // --- RECIPIENTS ---
-            $mail->setFrom($email, htmlspecialchars($name));
-            $mail->addAddress('prathamshetty329@gmail.com', 'Brain Buzz Admin'); 
+            $mail->Port       = (int) $_ENV['SMTP_PORT'];
 
-            // --- CONTENT ---
+            // Set sender and recipient
+            $mail->setFrom($_ENV['SMTP_USERNAME'], 'Brain Buzz Contact Form');
+            $mail->addAddress($_ENV['RECIPIENT_EMAIL'], $_ENV['RECIPIENT_NAME'] ?? 'Brain Buzz Admin');
+            $mail->addReplyTo($email, $name); // So recipient can Reply directly to user
+
+            // Email content
             $mail->isHTML(true);
             $mail->Subject = 'New Contact Form Message from ' . htmlspecialchars($name);
             $mail->Body    = "<b>Name:</b> " . htmlspecialchars($name) . "<br>" .
-                           "<b>Email:</b> " . htmlspecialchars($email) . "<br><br>" .
-                           "<b>Message:</b><br>" . nl2br(htmlspecialchars($message));
+                             "<b>Email:</b> " . htmlspecialchars($email) . "<br><br>" .
+                             "<b>Message:</b><br>" . nl2br(htmlspecialchars($message));
 
             $mail->send();
             $feedback = ['message' => 'Your message has been sent successfully!', 'type' => 'success'];
             $name = $email = $message = '';
         } catch (Exception $e) {
-            $feedback = ['message' => 'Message could not be sent. Please double-check your App Password.', 'type' => 'error'];
+            $feedback = [
+                'message' => 'Message could not be sent. Please double-check your SMTP/App Password.<br>' . htmlspecialchars($mail->ErrorInfo),
+                'type' => 'error'
+            ];
         }
     }
 }
 
 include_once 'header.php';
 ?>
+
+<!-- [Your HTML follows as before...] -->
 
 <div class="container">
     <div style="text-align: center; margin-bottom: 2rem;">
