@@ -31,7 +31,8 @@ if (isset($_POST['reset_password'])) {
             $type = $_SESSION['reset_type'];
 
             // Prepare the SQL statement to update the password
-            $sql = "UPDATE `{$type}` SET pw = :password WHERE mail = :email";
+            // The table name is dynamic but validated, and columns are fixed
+            $sql = "UPDATE \"{$type}\" SET pw = ? WHERE mail = ?";
             $stmt = $pdo->prepare($sql);
 
             // Execute the update
