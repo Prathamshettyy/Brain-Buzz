@@ -3,51 +3,45 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Require necessary files
-require_once 'sql.php'; // Your PDO DB connection
-require __DIR__ . '/vendor/autoload.php'; // Composer's autoload for libraries
+require_once 'sql.php'; // Your PDO connection or DB access
+
+// Load Composer autoloader (required for PHPMailer)
+require __DIR__ . '/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use Dotenv\Dotenv;
 
-// --- Environment Variable Loading ---
-// This section handles loading your secret keys and settings.
-// It will only load a .env file if it's not running on Render.
-// On Render, it uses the environment variables you set in the dashboard.
-if (getenv('RENDER') === false) {
-    if (file_exists(__DIR__ . '/.env')) {
-        $dotenv = Dotenv::createImmutable(__DIR__);
-        $dotenv->load();
-    }
+// Load environment variables only if .env file exists (useful for local development)
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
 }
 
-$feedback = null; // To store user feedback messages
+$feedback = null;
 
-// Check if the form has been submitted
 if (isset($_POST['send_otp'])) {
     try {
         $email = trim($_POST['email']);
-        $type = trim($_POST['type']); // 'student' or 'staff'
+        $type  = trim($_POST['type']); // 'student' or 'staff'
 
-        // Check if the user exists in the database
-        $sql = "SELECT * FROM {$type} WHERE mail = ?";
+        // Query user existence in DB
+        $sql  = "SELECT * FROM {$type} WHERE mail = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$email]);
         $user_exists = $stmt->fetch();
 
         if ($user_exists) {
-            // User found, generate and store a one-time password (OTP)
             $otp = rand(100000, 999999);
+
+            // Store OTP and info in session
             $_SESSION['otp'] = $otp;
             $_SESSION['reset_email'] = $email;
             $_SESSION['reset_type'] = $type;
 
             try {
-                // --- PHPMailer Configuration ---
                 $mail = new PHPMailer(true);
 
-                // Load SMTP config safely from environment variables
+                // Safely load SMTP config from environment variables
                 $smtpHost      = $_ENV['SMTP_HOST']       ?? getenv('SMTP_HOST')       ?? '';
                 $smtpUsername  = $_ENV['SMTP_USERNAME']   ?? getenv('SMTP_USERNAME')   ?? '';
                 $smtpPassword  = $_ENV['SMTP_PASSWORD']   ?? getenv('SMTP_PASSWORD')   ?? '';
@@ -56,61 +50,58 @@ if (isset($_POST['send_otp'])) {
                 $smtpFromName  = $_ENV['SMTP_FROM_NAME']  ?? getenv('SMTP_FROM_NAME')  ?? 'Brain Buzz Admin';
                 $smtpSecure    = $_ENV['SMTP_SECURE']     ?? getenv('SMTP_SECURE')     ?? 'tls';
 
-                // Server settings for PHPMailer
+                if (empty($smtpFromEmail)) {
+                    throw new Exception("SMTP_FROM_EMAIL environment variable is missing.");
+                }
+
+                // Configure PHPMailer SMTP
                 $mail->isSMTP();
                 $mail->Host       = $smtpHost;
                 $mail->SMTPAuth   = true;
                 $mail->Username   = $smtpUsername;
                 $mail->Password   = $smtpPassword;
                 $mail->Port       = (int) $smtpPort;
-                $mail->SMTPSecure = strtolower($smtpSecure) === 'ssl' ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->SMTPSecure = strtolower($smtpSecure) === 'ssl'
+                    ? PHPMailer::ENCRYPTION_SMTPS
+                    : PHPMailer::ENCRYPTION_STARTTLS;
 
-                if (empty($smtpFromEmail)) {
-                    throw new Exception("Sender email (SMTP_FROM_EMAIL) is not configured.");
-                }
-
-                // Recipients
+                // Set sender and recipient
                 $mail->setFrom($smtpFromEmail, $smtpFromName);
                 $mail->addAddress($email);
 
-                // Email Content
+                // Email content
                 $mail->isHTML(true);
                 $mail->Subject = 'Your Brain-Buzz Password Reset Code';
-                $mail->Body    = "Your one-time password reset code is: <b>{$otp}</b>";
+                $mail->Body    = "Your password reset code is: <b>{$otp}</b>";
 
-                // Send the email
                 $mail->send();
 
-                // Redirect user to the reset page
                 header("Location: reset-password.php");
                 exit();
-
             } catch (Exception $e) {
-                // Handle email sending errors
                 $feedback = [
-                    'message' => "Could not send email. Please try again later. Error: " . htmlspecialchars($mail->ErrorInfo),
+                    'message' => "Could not send email. Error: " . htmlspecialchars($mail->ErrorInfo),
                     'type'    => 'error'
                 ];
             }
         } else {
-            // Handle case where user is not found
             $feedback = [
                 'message' => 'No account found with that email for the selected user type.',
                 'type'    => 'error'
             ];
         }
     } catch (PDOException $e) {
-        // Handle database connection errors
         $feedback = [
-            'message' => 'A database error occurred. Please contact support.',
+            'message' => 'A database error occurred.',
             'type'    => 'error'
         ];
     }
 }
 
-// Include header file
 include_once 'header.php';
 ?>
+
+<!-- Your existing HTML form -->
 
 <div class="container form-container">
     <div class="card">
@@ -120,8 +111,8 @@ include_once 'header.php';
         </div>
 
         <?php if ($feedback): ?>
-            <div class="message <?php echo htmlspecialchars($feedback['type']); ?>">
-                <?php echo htmlspecialchars($feedback['message']); ?>
+            <div class="message <?php echo $feedback['type']; ?>">
+                <?php echo $feedback['message']; ?>
             </div>
         <?php endif; ?>
 
@@ -143,23 +134,21 @@ include_once 'header.php';
 </div>
 
 <style>
-    .message {
-        padding: 1rem;
-        border-radius: 6px;
-        text-align: center;
-        margin-bottom: 1.5rem;
-        font-weight: 500;
-    }
-    .message.error {
-        background-color: #f8d7da; /* Light red */
-        color: #721c24; /* Dark red */
-        border: 1px solid #f5c6cb;
-    }
-    .message.success {
-        background-color: #d4edda; /* Light green */
-        color: #155724; /* Dark green */
-        border: 1px solid #c3e6cb;
-    }
+.message {
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+.message.error {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+.message.success {
+    background-color: #166534;
+    color: #dcfce7;
+}
 </style>
 
 <?php include_once 'footer.php'; ?>
