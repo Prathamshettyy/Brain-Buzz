@@ -42,7 +42,7 @@ include_once 'header.php';
     <div class="card">
         <div class="card-header">
             <h2>Student Login</h2>
-            <p>Welcome back! Enter your credentials to begin.</p>
+            <p>Please enter your credentials to access the dashboard.</p>
         </div>
 
         <?php if ($error_message): ?>

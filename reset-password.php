@@ -1,10 +1,10 @@
 <?php
-// This page handles the second step: verifying the OTP and updating the password
+// This page handles the second step: verifying OTP and updating the password
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// If the user hasn't started the process, redirect them to the beginning
+// If the user hasn't started the process, redirect them.
 if (!isset($_SESSION['otp']) || !isset($_SESSION['reset_email'])) {
     header("Location: forgot-password.php");
     exit();
@@ -28,28 +28,32 @@ if (isset($_POST['reset_password'])) {
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
             $email = $_SESSION['reset_email'];
-            $type = $_SESSION['reset_type'];
-
-            // Prepare the SQL statement using PostgreSQL-compatible double quotes
-            $sql = "UPDATE \"{$type}\" SET pw = ? WHERE mail = ?";
-            $stmt = $pdo->prepare($sql);
+            $type = $_SESSION['reset_type']; // This will be 'student' or 'staff'
 
             // *** THIS IS THE FIX ***
+            // The SQL query is now written without quotes around the table name.
+            // This syntax is portable and works on both MySQL and PostgreSQL.
+            $sql = "UPDATE {$type} SET pw = ? WHERE mail = ?";
+            
+            $stmt = $pdo->prepare($sql);
+
             // Execute the update using an indexed array that matches the "?" placeholders
             if ($stmt->execute([$hashed_password, $email])) {
-                // Success! Destroy the session and redirect to the login page
+                // Success! Clean up the session and redirect to the appropriate login page
                 session_destroy();
-                header("Location: login.php?reset=success");
+                $success_page = ($type === 'student') ? 'loginstud.php' : 'loginstaff.php';
+                header("Location: {$success_page}?reset=success");
                 exit();
             } else {
                 $feedback = ['message' => 'Failed to update your password. Please try again.', 'type' => 'error'];
             }
         }
     } catch (PDOException $e) {
-        // Restore the user-friendly error message for production
+        // Provide a user-friendly error message for production
         $feedback = ['message' => 'A database error occurred. Please contact support.', 'type' => 'error'];
-        // For your own future debugging, you can log the real error like this:
-        // error_log('Password Reset Failed: ' . $e->getMessage());
+        // For your own logs, it's helpful to record the actual error
+        // On your local machine, you could uncomment the line below to see the real error:
+        // $feedback = ['message' => 'Database Error: ' . $e->getMessage(), 'type' => 'error'];
     }
 }
 
@@ -60,7 +64,7 @@ include_once 'header.php';
     <div class="card">
         <div class="card-header">
             <h2>Reset Your Password</h2>
-            <p>A reset code has been sent to <strong><?php echo htmlspecialchars($_SESSION['reset_email']); ?></strong>. Please enter it below.</p>
+            <p>An email with a reset code has been sent to <strong><?php echo htmlspecialchars($_SESSION['reset_email']); ?></strong>. Please enter it below.</p>
         </div>
 
         <?php if ($feedback): ?>

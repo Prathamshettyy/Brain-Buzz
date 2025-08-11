@@ -10,29 +10,36 @@ include_once 'header.php';
     <p style="color:var(--text-secondary); margin-top:0; margin-bottom:2rem;">This is your staff dashboard. Manage quizzes and monitor students from here.</p>
 
     <div class="dashboard-grid">
-        <a href="addq.php" class="card-link">
-            <div class="action-card">
-                <i class="fa fa-plus-circle"></i>
-                <h3>Add New Quiz</h3>
-                <p>Create a new quiz and add questions.</p>
-            </div>
-        </a>
-        <a href="quizlist.php" class="card-link">
-            <div class="action-card">
-                <i class="fa fa-list-alt"></i>
-                <h3>View All Quizzes</h3>
-                <p>Edit or manage existing quizzes.</p>
-            </div>
-        </a>
-        <a href="staffleaderboard.php" class="card-link">
-             <div class="action-card">
-                <i class="fa fa-trophy"></i>
-                <h3>View Leaderboard</h3>
-                <p>See student rankings and scores.</p>
-            </div>
-        </a>
-    </div>
-
+    <a href="addq.php" class="card-link">
+        <div class="action-card">
+            <i class="fa fa-plus-circle"></i>
+            <h3>Add New Quiz</h3>
+            <p>Create a new quiz and add questions.</p>
+        </div>
+    </a>
+    <a href="quizlist.php" class="card-link">
+        <div class="action-card">
+            <i class="fa fa-list-alt"></i>
+            <h3>View All Quizzes</h3>
+            <p>Edit or manage existing quizzes.</p>
+        </div>
+    </a>
+    <a href="staffleaderboard.php" class="card-link">
+         <div class="action-card">
+            <i class="fa fa-trophy"></i>
+            <h3>View Leaderboard</h3>
+            <p>See student rankings and scores.</p>
+        </div>
+    </a>
+    
+    <a href="add_staff.php" class="card-link">
+        <div class="action-card">
+            <i class="fa fa-user-plus"></i>
+            <h3>Add New Staff</h3>
+            <p>Create a new account for a staff member.</p>
+        </div>
+    </a>
+</div>
     <div class="card" style="margin-top: 2rem;">
         <div class="card-header">
             <h3><i class="fa fa-history"></i> Recently Added Quizzes</h3>
